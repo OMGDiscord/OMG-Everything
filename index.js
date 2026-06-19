@@ -250,34 +250,33 @@ if (command === 'clear') {
         message.channel.send('An error occurred while removing the role.');
       });
   }
-if (command === "meme") {
+  if (command === "meme") {
     const axios = require('axios');
     const Discord = require('discord.js');
     const embed = new Discord.MessageEmbed();
-    
-    axios.get('https://www.reddit.com/r/memes/random/.json')
-        .then(response => {
-            const [post] = response.data[0].data.children;
 
-            const permalink = post.data.permalink;
-            const memeUrl = `https://reddit.com${permalink}`;
-            const memeImage = post.data.url;
-            const memeTitle = post.data.title;
-            const memeUpvotes = post.data.ups;
-            const memeNumComments = post.data.num_comments;
+    axios.get('https://meme-api.com/gimme/memes')
+    .then(response => {
+      const meme = response.data;
 
-            embed.setTitle(`${memeTitle}`);
-            embed.setURL(`${memeUrl}`);
-            embed.setColor('RANDOM');
-            embed.setImage(memeImage);
-            embed.setFooter({
-                text:`👍 ${memeUpvotes} 💬 ${memeNumComments}`
-            });
+      const memeUrl = meme.postLink;
+      const memeImage = meme.url;
+      const memeTitle = meme.title;
+      const memeUpvotes = meme.ups;
+      const memeNumComments = 0; // not provided by this API
 
-            message.channel.send({ embeds: [embed] });
-        })
-        .catch(console.error);
-}
+      embed.setTitle(memeTitle);
+      embed.setURL(memeUrl);
+      embed.setColor('RANDOM');
+      embed.setImage(memeImage);
+      embed.setFooter({
+        text: `👍 ${memeUpvotes} 💬 ${memeNumComments}`
+      });
+
+      message.channel.send({ embeds: [embed] });
+    })
+    .catch(console.error);
+  }
 if (command === 'upload') {
   message.channel.send('Here is enderman Secrect Song.');
   message.channel.send({
