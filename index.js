@@ -91,7 +91,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
 		    { name: '/upload', value: 'Uploads a secrect File' },
-        { name: '/resones-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
+        { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
         );
@@ -533,7 +533,7 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('messageCreate', message => {
-  if (message.content.startsWith('/resones-why-to-never-upgrade-to-windows-11')) {
+  if (message.content.startsWith('/reasons-why-to-never-upgrade-to-windows-11')) {
     const reasons = [
       'Not all programs and hardware are compatible with Windows 11.',
       'Windows 10 already works well for most users and is still supported until 2032.',
