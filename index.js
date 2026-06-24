@@ -536,7 +536,7 @@ client.on('messageCreate', message => {
   if (message.content.startsWith('/resones-why-to-never-upgrade-to-windows-11')) {
     const reasons = [
       'Not all programs and hardware are compatible with Windows 11.',
-      'Windows 10 already works well for most users and is still supported until 2025.',
+      'Windows 10 already works well for most users and is still supported until 2032.',
       'Windows 11 requires higher system requirements, which may not be affordable or feasible for some users.',
       'There may be bugs and issues with the initial release of Windows 11 that still need to be addressed.',
       'Some users prefer the interface and experience of Windows 10 over Windows 11.',
