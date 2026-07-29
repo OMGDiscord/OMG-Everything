@@ -427,11 +427,29 @@ client.on('messageDelete', (message) => {
   }
 });
 // Channel update listener
-client.on('channelUpdate', (oldChannel, newChannel) => {
+client.on('channelUpdate', async (oldChannel, newChannel) => {
   const guild = oldChannel.guild;
-  const modLogChannel = guild.channels.cache.find(channel => channel.name === 'modlogs');
+
+  // Fetch audit logs to see who made the change
+  const logs = await guild.fetchAuditLogs({ limit: 1, type: 11 }); // 11 = CHANNEL_UPDATE
+  const entry = logs.entries.first();
+
+  // If no log entry, stop
+  if (!entry) return;
+
+  const executor = entry.executor;
+
+  // 🚫 Ignore DiscordSRV bot
+  if (executor.id === '1293648421084725319') return;
+
+  const modLogChannel = guild.channels.cache.find(
+    channel => channel.name === 'modlogs'
+  );
+
   if (modLogChannel) {
-    modLogChannel.send(`Channel ${oldChannel.name} has been updated to ${newChannel.name}`);
+    modLogChannel.send(
+      `Channel ${oldChannel.name} has been updated to ${newChannel.name}`
+    );
   }
 });
 
@@ -464,18 +482,27 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 });
 
 // Edited messages listener
-client.on('messageUpdate', (oldMessage, newMessage) => {
-  const guild = oldMessage.guild;
-  const modLogChannel = guild.channels.cache.find(channel => channel.name === 'modlogs');
-  
-  // Ignore messages edited by the bot itself
-  if (oldMessage.author.bot) {
-    return;
-  }
+client.on('messageUpdate', async (oldMessage, newMessage) => {
+  if (!oldMessage.guild) return;
+
+  // fetch if partial (prevents missing content issues)
+  if (oldMessage.partial) await oldMessage.fetch();
+  if (newMessage.partial) await newMessage.fetch();
+
+  // 🚫 ignore ONLY DiscordSRV bot
+  if (oldMessage.author.id === '1293648421084725319') return;
+
+  // ignore if nothing actually changed
+  if (oldMessage.content === newMessage.content) return;
+
+  const modLogChannel = oldMessage.guild.channels.cache.find(
+    channel => channel.name === 'modlogs'
+  );
 
   if (modLogChannel) {
-    modLogChannel.send(`A message by ${oldMessage.author.tag} was edited in ${oldMessage.channel}: "${oldMessage.content}" was changed to "${newMessage.content}"`)
-      .catch(console.error);
+    modLogChannel.send(
+      `A message by ${oldMessage.author.tag} was edited in ${oldMessage.channel}: "${oldMessage.content}" → "${newMessage.content}"`
+    );
   }
 });
 
