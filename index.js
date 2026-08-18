@@ -90,7 +90,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/ping', value: 'Pings the bot to check if it is working' },
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
-		    { name: '/upload', value: 'Uploads a secrect File' },
+	    { name: '/', value: 'Uploads a secrect File' },
         { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
@@ -105,7 +105,7 @@ client.on('interactionCreate', async interaction => {
         .setTitle('Bot Admin Commands')
         .setDescription('Here are the available admin commands for this bot:')
         .addFields(
-        {  name: '/adminhelp', value: 'Displays this list of commands' },
+        { name: '/adminhelp', value: 'Displays this list of commands' },
         { name: '/giverole', value: 'Gives a role to a User' },
         { name: '/removerole', value: 'Removes a Role from User' },
         { name: '/clear', value: 'To clear the chat from 1 - 99 messages' },
@@ -361,7 +361,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return; // Ignore messages from other bots and self
   if (!message.guild) return; // Ignore DMs
 
-  const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com' , 'klipy.com'];
+  const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com' , 'klipy.com' , 'cdn.discordapp.com'];
   const hasLinkPermission = message.member.permissions.has('ADMINISTRATOR');
   const messageContent = message.content.toLowerCase(); // Convert message content to lowercase for case-insensitive matching
 
