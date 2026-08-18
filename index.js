@@ -90,7 +90,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/ping', value: 'Pings the bot to check if it is working' },
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
-	    { name: '/', value: 'Uploads a secrect File' },
+	    { name: '/upload', value: 'Uploads a secrect File' },
         { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
