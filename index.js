@@ -90,7 +90,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/ping', value: 'Pings the bot to check if it is working' },
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
-	    { name: '/upload', value: 'Uploads a secrect File' },
+	{ name: '/upload', value: 'Uploads a secrect File' },
         { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
@@ -400,6 +400,35 @@ client.on('messageCreate', message => {
         }, 15000);
       })
       .catch(console.error);
+  }
+});
+
+client.on('messageCreate', message => {
+  const ownerRoleName = 'Owner';
+  const minLength = 8;      // ignore short messages
+  const capsThreshold = 0.7; // 70% caps triggers it
+
+  const isStaff = message.member.roles.cache.some(role => role.name === ownerRoleName) || message.member.permissions.has('ADMINISTRATOR');
+
+  if (message.author.bot || isStaff) return;
+
+  const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
+
+  if (letters.length >= minLength) {
+    const upperCount = (letters.match(/[A-Z]/g) || []).length;
+    const capsRatio = upperCount / letters.length;
+
+    if (capsRatio >= capsThreshold) {
+      message.delete().catch(console.error);
+
+      message.reply('Oops! Please avoid using excessive caps. Your message has been deleted.')
+        .then(msg => {
+          setTimeout(() => {
+            msg.delete().catch(console.error);
+          }, 15000);
+        })
+        .catch(console.error);
+    }
   }
 });
 
