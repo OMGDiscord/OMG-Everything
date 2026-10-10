@@ -109,6 +109,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/giverole', value: 'Gives a role to a User' },
         { name: '/removerole', value: 'Removes a Role from User' },
         { name: '/clear', value: 'To clear the chat from 1 - 99 messages' },
+        { name: '/nicknameremove', value: 'Removes the nickname from all members' },
     
             // Add more command fields here if needed
             );
@@ -134,6 +135,31 @@ client.on('interactionCreate', async interaction => {
     }
   
     await interaction.reply(response);
+  }
+  // Nickname removeable for all pepole
+  if (interaction.commandName === 'nicknameremove') {
+    if (!interaction.memberPermissions.has('MANAGE_NICKNAMES')) {
+      return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+    }
+
+    await interaction.deferReply();
+
+    const members = await interaction.guild.members.fetch();
+    let removed = 0;
+    let failed = 0;
+
+    for (const member of members.values()) {
+      if (!member.nickname) continue;
+
+      try {
+        await member.setNickname(null, `Nickname reset by ${interaction.user.tag}`);
+        removed++;
+      } catch (error) {
+        failed++;
+      }
+    }
+
+    await interaction.editReply(`Removed ${removed} nickname(s). Failed for ${failed} member(s).`);
   }
 });
 
@@ -430,6 +456,35 @@ client.on('messageCreate', message => {
         .catch(console.error);
     }
   }
+});
+
+// nickname remove for all pepole
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || !message.guild) return;
+  if (message.content.toLowerCase() !== '/nicknameremove') return;
+
+  if (!message.member.permissions.has('MANAGE_NICKNAMES')) {
+    return message.reply('You do not have permission to use this command.');
+  }
+
+  const status = await message.reply('Removing nicknames, please wait...');
+
+  const members = await message.guild.members.fetch();
+  let removed = 0;
+  let failed = 0;
+
+  for (const member of members.values()) {
+    if (!member.nickname) continue; // no nickname, skip
+
+    try {
+      await member.setNickname(null, `Nickname reset by ${message.author.tag}`);
+      removed++;
+    } catch (error) {
+      failed++; // server owner or someone above the bot's role
+    }
+  }
+
+  await status.edit(`Removed ${removed} nickname(s). Failed for ${failed} member(s).`);
 });
 
 client.on('guildMemberAdd', (member) => {
