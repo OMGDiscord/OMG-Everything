@@ -528,7 +528,7 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
   const executor = entry.executor;
 
   // 🚫 Ignore DiscordSRV bot
-  if (executor.id === process.env.DISCORD_SRV_BOT_ID) return;
+  if (executor?.id === process.env.DISCORD_SRV_BOT_ID) return;
 
   const modLogChannel = guild.channels.cache.find(
     channel => channel.name === 'modlogs'
@@ -571,25 +571,28 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 
 // Edited messages listener
 client.on('messageUpdate', async (oldMessage, newMessage) => {
-  if (!oldMessage.guild) return;
+  if (!newMessage.guild) return;
 
   // fetch if partial (prevents missing content issues)
-  if (oldMessage.partial) await oldMessage.fetch();
-  if (newMessage.partial) await newMessage.fetch();
+  if (oldMessage.partial) await oldMessage.fetch().catch(() => {});
+  if (newMessage.partial) await newMessage.fetch().catch(() => {});
+
+  const author = newMessage.author || oldMessage.author;
+  if (!author) return;
 
   // 🚫 ignore ONLY DiscordSRV bot
-  if (oldMessage.author.id === process.env.DISCORD_SRV_BOT_ID) return;
+  if (author.id === process.env.DISCORD_SRV_BOT_ID) return;
 
-  // ignore if nothing actually changed
-  if (oldMessage.content === newMessage.content) return;
+  // ignore if nothing actually changed (or if old content wasn't cached)
+  if (!oldMessage.content || oldMessage.content === newMessage.content) return;
 
-  const modLogChannel = oldMessage.guild.channels.cache.find(
+  const modLogChannel = newMessage.guild.channels.cache.find(
     channel => channel.name === 'modlogs'
   );
 
   if (modLogChannel) {
     modLogChannel.send(
-      `A message by ${oldMessage.author.tag} was edited in ${oldMessage.channel}: "${oldMessage.content}" → "${newMessage.content}"`
+      `A message by ${author.tag} was edited in ${newMessage.channel}: "${oldMessage.content}" → "${newMessage.content}"`
     );
   }
 });
