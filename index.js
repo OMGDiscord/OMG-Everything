@@ -295,14 +295,14 @@ if (command === 'clear') {
       const memeUrl = meme.postLink;
       const memeImage = meme.url;
       const memeTitle = meme.title;
-      const memeNumComments = 0; // not provided by this API
+      const memeUpvotes = meme.ups;
 
       embed.setTitle(memeTitle);
       embed.setURL(memeUrl);
       embed.setColor('Random');
       embed.setImage(memeImage);
       embed.setFooter({
-        text: `💬 ${memeNumComments}`
+        text: `👍 ${memeUpvotes}`
       });
 
       message.channel.send({ embeds: [embed] });
