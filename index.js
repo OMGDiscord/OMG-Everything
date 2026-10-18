@@ -24,7 +24,7 @@ client.on('ready', () => {
   const generalChannel = client.channels.cache.get(GENERAL_CHANNEL_ID);
   const omgbotsChannel = client.channels.cache.get(OMG_BOTS_CHANNEL_ID);
 
-  if (omgbotsChannel?.isText()) {
+  if (omgbotsChannel?.isTextBased()) {
     omgbotsChannel.send('Hi, I am OMG Everything!\nAnd I am ready now.\nUse /help to see a list of my commands.');
   }
 });
