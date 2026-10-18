@@ -4,7 +4,10 @@ const {
   Client,
   GatewayIntentBits,
   AttachmentBuilder,
-  PermissionsBitField
+  PermissionsBitField,
+  ApplicationCommandOptionType,
+  Partials,
+  EmbedBuilder
 } = require('discord.js');
 
 const client = new Client({
@@ -12,14 +15,25 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.MessageContent
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions
+],
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction
   ]
 });
 
-const GENERAL_CHANNEL_ID = '1561291437063151732';
-const OMG_BOTS_CHANNEL_ID = '1561291436832329791';
+client.setMaxListeners(20);
 
-client.on('ready', () => {
+const GENERAL_CHANNEL_ID = process.env.GENERAL_CHANNEL_ID;
+const OMG_BOTS_CHANNEL_ID = process.env.OMG_BOTS_CHANNEL_ID;
+const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
+const leaveChannelId = process.env.LEAVE_CHANNEL_ID;
+const RectonRolesChannelId = process.env.RECTON_ROLES_CHANNEL_ID;
+
+client.on('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
   const generalChannel = client.channels.cache.get(GENERAL_CHANNEL_ID);
   const omgbotsChannel = client.channels.cache.get(OMG_BOTS_CHANNEL_ID);
@@ -29,25 +43,7 @@ client.on('ready', () => {
   }
 });
 
-//module.exports = {
-//  data: {
-//    name: 'upload',
-//    description: 'Upload enderman Secret Song.',
-//  },
-//  async execute(interaction) {
-//    const Discord = require('discord.js');
-//    try {
-//      const path = require('path');
-//      const file = new Discord.MessageAttachment(path.join(__dirname, './d.mp3'));
-//      await interaction.reply({ content: "Here is enderman Secret Song!:", files: [file] });
-//    } catch (error) {
-//      console.log(error);
-//      await interaction.reply({ content: 'An error occurred!', ephemeral: true });
-//    }
-//  },
-//};
-
-client.once('ready', async () => {
+client.once('clientReady', async () => {
   try {
     // wait for bot to be logged in
     await client.application?.fetch();
@@ -65,7 +61,7 @@ client.once('ready', async () => {
       options: [
         {
           name: 'target',
-          type: 'USER',
+          type: ApplicationCommandOptionType.User,
           description: 'Select a user to display information about',
           required: false,
         },
@@ -92,7 +88,7 @@ client.on('interactionCreate', async interaction => {
   const { commandName, options } = interaction;
 
   if (interaction.commandName === 'help') {
-    const embed = new Discord.MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('Bot Commands')
       .setDescription('Here are the available commands for this bot:')
@@ -101,7 +97,7 @@ client.on('interactionCreate', async interaction => {
         { name: '/ping', value: 'Pings the bot to check if it is working' },
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
-	{ name: '/upload', value: 'Uploads a secrect File' },
+	      { name: '/upload', value: 'Uploads a secrect File' },
         { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
@@ -111,7 +107,7 @@ client.on('interactionCreate', async interaction => {
         interaction.reply({ embeds: [embed] });
       }
   if (interaction.commandName === 'adminhelp') {
-    const embed = new Discord.MessageEmbed()
+    const embed = new EmbedBuilder()
         .setColor('#0099ff')
         .setTitle('Bot Admin Commands')
         .setDescription('Here are the available admin commands for this bot:')
@@ -121,7 +117,9 @@ client.on('interactionCreate', async interaction => {
         { name: '/removerole', value: 'Removes a Role from User' },
         { name: '/clear', value: 'To clear the chat from 1 - 99 messages' },
         { name: '/nicknameremove', value: 'Removes the nickname from all members' },
-    
+        { name: '/setupcolors', value: 'Sends the color reaction roles menu' },
+        { name: '/setuposes', value: 'Sends the OS reaction roles menu' },
+
             // Add more command fields here if needed
             );
     
@@ -177,10 +175,7 @@ client.on('interactionCreate', async interaction => {
 
 const prefix = "/";
 
-client.on("ready", () => {
-    console.log(`Logged in as ${client.user.tag}`)
-})
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).trim().split(/ +/);
@@ -219,7 +214,7 @@ if (command === 'ping') {
     .catch(console.error);
 }
 if (command === 'clear') {
-  if (!message.member.permissions.has('ADMINISTRATOR')) {
+  if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('You do not have permission to use this command.');
   }
 
@@ -235,7 +230,7 @@ if (command === 'clear') {
 }
   if (command === 'giverole') {
      // Check if the user has permission to use the command
-    if (!message.member.permissions.has('MANAGE_ROLES')) {
+    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
       message.reply('You do not have permission to use this command.');
       return;
     }
@@ -260,9 +255,10 @@ if (command === 'clear') {
         message.channel.send('An error occurred while giving the role.');
       });
   }
+  
   if (command === 'removerole') {
     // Check if the user has permission to use the command
-    if (!message.member.permissions.has('MANAGE_ROLES')) {
+    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
       message.reply('You do not have permission to use this command.');
       return;
     }
@@ -290,7 +286,7 @@ if (command === 'clear') {
   if (command === "meme") {
     const axios = require('axios');
     const Discord = require('discord.js');
-    const embed = new Discord.MessageEmbed();
+    const embed = new EmbedBuilder();
 
     axios.get('https://meme-api.com/gimme/memes')
     .then(response => {
@@ -377,9 +373,6 @@ client.on("messageCreate", (message) => {
   }
 });
 
-const welcomeChannelId = "1561291436576743438"
-const leaveChannelId = "1561291436576743439"
-
 client.on('guildMemberAdd', member => {
   // Get the channel by ID
   const channel = member.guild.channels.cache.get(welcomeChannelId);
@@ -399,7 +392,7 @@ client.on('messageCreate', async (message) => {
   if (!message.guild) return; // Ignore DMs
 
   const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com' , 'klipy.com' , 'cdn.discordapp.com'];
-  const hasLinkPermission = message.member.permissions.has('ADMINISTRATOR');
+  const hasLinkPermission = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
   const messageContent = message.content.toLowerCase(); // Convert message content to lowercase for case-insensitive matching
 
   const hasLink = /(http|https):\/\/(\S+)\.(\S+)/gi.test(messageContent);
@@ -427,7 +420,7 @@ client.on('messageCreate', message => {
   const swearWords = ['fuck', 'shit', 'wtf', 'fu`ck`', 'nigger', 'Fuxk', 'fk', 'gay', 'lasbian', 'porn', 'fuсk', 'g@y', 'pedo', 'gayy', 'bigbootylesbianlover', 'bigbootylasbians'];
   const ownerRoleName = 'Owner';
 
-  if (!message.author.bot && !message.member.roles.cache.some(role => role.name === ownerRoleName) && !message.member.permissions.has('ADMINISTRATOR') && swearWords.some(word => message.content.toLowerCase().match(`\\b${word}\\b`))) {
+  if (!message.author.bot && !message.member.roles.cache.some(role => role.name === ownerRoleName) && !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && swearWords.some(word => message.content.toLowerCase().match(`\\b${word}\\b`))) {
     message.delete().catch(console.error);
 
     message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted.')
@@ -447,7 +440,7 @@ client.on('messageCreate', message => {
 
   const isStaff = message.member &&
     (message.member.roles.cache.some(role => role.name === ownerRoleName) ||
-     message.member.permissions.has('Administrator'));
+     message.member.permissions.has(PermissionsBitField.Flags.Administrator));
 	
   if (message.author.bot || isStaff) return;
 
@@ -517,6 +510,9 @@ client.on('guildMemberRemove', (member) => {
 });
 
 client.on('messageDelete', (message) => {
+  // If the message is a partial (uncached/older message), we can't read its author or content
+  if (message.partial || !message.author) return;
+
   const guild = message.guild;
   const modLogChannel = guild.channels.cache.find(channel => channel.name === 'modlogs');
   if (modLogChannel) {
@@ -537,7 +533,7 @@ client.on('channelUpdate', async (oldChannel, newChannel) => {
   const executor = entry.executor;
 
   // 🚫 Ignore DiscordSRV bot
-  if (executor.id === '1293648421084725319') return;
+  if (executor.id === process.env.DISCORD_SRV_BOT_ID) return;
 
   const modLogChannel = guild.channels.cache.find(
     channel => channel.name === 'modlogs'
@@ -587,7 +583,7 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
   if (newMessage.partial) await newMessage.fetch();
 
   // 🚫 ignore ONLY DiscordSRV bot
-  if (oldMessage.author.id === '1293648421084725319') return;
+  if (oldMessage.author.id === process.env.DISCORD_SRV_BOT_ID) return;
 
   // ignore if nothing actually changed
   if (oldMessage.content === newMessage.content) return;
@@ -1041,7 +1037,7 @@ client.on('message', (message) => {
 }); 
 
 client.on('messageCreate', async (message) => {
-  const adminPermission = message.member?.permissions.has('ADMINISTRATOR');
+  const adminPermission = message.member?.permissions.has(PermissionsBitField.Flags.Administrator);
 
   if (
     message.channel.name === 'general-no-chat' &&
@@ -1077,5 +1073,148 @@ client.on('messageCreate', async (message) => {
   }
 });
 
+// Map emojis to the role IDs from your .env
+const colorRoles = {
+  '🌲': process.env.ROLE_FOREST_GREEN_ID,
+  '🍏': process.env.ROLE_LIME_GREEN_ID,
+  '🩸': process.env.ROLE_BLOOD_RED_ID,
+  '⚡': process.env.ROLE_PIKACHU_ID,
+  '🌸': process.env.ROLE_SHROOM_PINK_ID,
+  '🔮': process.env.ROLE_PASTEL_PURPLE_ID,
+  '🃏': process.env.ROLE_JOKER_PURPLE_ID,
+  '🧀': process.env.ROLE_GAWDY_YELLOW_ID,
+  '⚪': process.env.ROLE_BRIGHT_WHITE_ID,
+  '⚫': process.env.ROLE_DARK_BLACK_ID,
+  '🌺': process.env.ROLE_PROBABLY_MAGENTA_ID,
+  '💙': process.env.ROLE_GOOD_BLUE_ID,
+  '💎': process.env.ROLE_ROYAL_BLUE_ID,
+};
 
+// Map emojis to the OS role IDs from your .env
+const osRoles = {
+  '🪟': process.env.ROLE_WINDOWS_ID,
+  '🐧': process.env.ROLE_OTHER_LINUX_ID,
+  '🔼': process.env.ROLE_ARCH_ID,
+  '🌀': process.env.ROLE_DEBIAN_ID,
+  '🍎': process.env.ROLE_MAC_OS_ID,
+  '🕳️': process.env.ROLE_VOID_ID,
+  '🎩': process.env.ROLE_FEDORA_ID,
+  '🟣': process.env.ROLE_GENTOO_ID,
+  '👑': process.env.ROLE_STEAVENLINUX_ID,
+  '⛑️': process.env.ROLE_REDHAT_ID,
+  '🦎': process.env.ROLE_OPENSUSE_ID,
+  '❄️': process.env.ROLE_NIXOS_ID,
+  '😈': process.env.ROLE_BSD_ID,
+};
+
+// 1. Command to send or update the reaction menus
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  // Split the message to check for a Message ID argument
+  const args = message.content.trim().split(/ +/);
+  const command = args.shift().toLowerCase();
+
+  // Type "/setupcolors" to send a new menu, or "/setupcolors [Message_ID]" to update an existing one
+  if (command === '/setupcolors' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    const channel = client.channels.cache.get(RectonRolesChannelId);
+    
+    if (!channel) {
+      return message.reply("Could not find the reaction roles channel. Check your .env ID.");
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle("🎨 Choose Your Color")
+      .setDescription(
+        "React to this message to get a color role!\n\n" +
+        "🌲 - Forest Green\n" +
+        "🍏 - Lime Green\n" +
+        "🩸 - Blood Red\n" +
+        "⚡ - Pikachu color\n" +
+        "🌸 - Shroom Pink\n" +
+        "🔮 - Pastel Purple\n" +
+        "🃏 - Joker Purple\n" +
+        "🧀 - Gawdy Yellow\n" +
+        "⚪ - Bright White\n" +
+        "⚫ - Dark Black\n" +
+        "🌺 - Probably Magenta\n" +
+        "💙 - Good Blue\n" +
+        "💎 - Royal Blue"
+      )
+      .setColor('#0099ff');
+
+    const messageId = args[0];
+    let reactionMessage;
+
+    if (messageId) {
+      try {
+        reactionMessage = await channel.messages.fetch(messageId);
+        await reactionMessage.edit({ embeds: [embed] });
+        message.reply("Color reaction message successfully updated!");
+      } catch (error) {
+        return message.reply("Could not find a message with that ID. Make sure it's in the correct channel.");
+      }
+    } else {
+      reactionMessage = await channel.send({ embeds: [embed] });
+      message.reply("Color reaction message successfully sent to the channel!");
+    }
+    
+    // Add the reactions to the message (it will skip ones that are already there)
+    const emojis = ['🌲', '🍏', '🩸', '⚡', '🌸', '🔮', '🃏', '🧀', '⚪', '⚫', '🌺', '💙', '💎'];
+    for (const emoji of emojis) { 
+      await reactionMessage.react(emoji).catch(() => {}); 
+    }
+  }
+
+  // Type "/setuposes" to send a new menu, or "/setuposes [Message_ID]" to update an existing one
+  if (command === '/setuposes' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    const channel = client.channels.cache.get(RectonRolesChannelId);
+    
+    if (!channel) {
+      return message.reply("Could not find the reaction roles channel. Check your .env ID.");
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle("💻 Choose Your OS")
+      .setDescription(
+        "React to this message to get an OS role!\n\n" +
+        "🪟 - Windows\n" +
+        "🐧 - Other Linux\n" +
+        "🔼 - Arch\n" +
+        "🌀 - Debian\n" +
+        "🍎 - Mac OS\n" +
+        "🕳️ - Void\n" +
+        "🎩 - Fedora\n" +
+        "🟣 - Gentoo\n" +
+        "👑 - SteavenLinux\n" +
+        "⛑️ - RedHat\n" +
+        "🦎 - OpenSUSE\n" +
+        "❄️ - NixOS\n" +
+        "😈 - BSD"
+      )
+      .setColor('#0099ff');
+
+    const messageId = args[0];
+    let reactionMessage;
+
+    if (messageId) {
+      try {
+        reactionMessage = await channel.messages.fetch(messageId);
+        await reactionMessage.edit({ embeds: [embed] });
+        message.reply("OS reaction message successfully updated!");
+      } catch (error) {
+        return message.reply("Could not find a message with that ID. Make sure it's in the correct channel.");
+      }
+    } else {
+      reactionMessage = await channel.send({ embeds: [embed] });
+      message.reply("OS reaction message successfully sent to the channel!");
+    }
+    
+    // Add the reactions to the message (it will skip ones that are already there)
+    const emojis = ['🪟', '🐧', '🔼', '🌀', '🍎', '🕳️', '🎩', '🟣', '👑', '⛑️', '🦎', '❄️', '😈'];
+    for (const emoji of emojis) { 
+      await reactionMessage.react(emoji).catch(() => {}); 
+    }
+  }
+});
 client.login(process.env.TOKEN)
