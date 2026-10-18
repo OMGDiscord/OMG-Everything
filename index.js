@@ -417,7 +417,7 @@ client.on('messageCreate', async (message) => {
 });
 
 client.on('messageCreate', message => {
-  const swearWords = ['fuck', 'shit', 'wtf', 'fu`ck`', 'nigger', 'Fuxk', 'fk', 'gay', 'lasbian', 'porn', 'fuсk', 'g@y', 'pedo', 'gayy', 'bigbootylesbianlover', 'bigbootylasbians'];
+  const swearWords = ['fuck', 'shit', 'wtf', 'fu`ck`', 'nigger', 'Fuxk', 'fk', 'gay', 'lasbian', 'porn', 'fuсk', 'g@y', 'pedo', 'gayy', 'bigbootylesbianlover', 'bigbootylasbians', 'esex'];
   const ownerRoleName = 'Owner';
 
   if (!message.author.bot && !message.member.roles.cache.some(role => role.name === ownerRoleName) && !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && swearWords.some(word => message.content.toLowerCase().match(`\\b${word}\\b`))) {
