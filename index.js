@@ -5,8 +5,8 @@ const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MEMBERS]
 });
 
-const GENERAL_CHANNEL_ID = '1164581616845328585';
-const OMG_BOTS_CHANNEL_ID = '1373583399654129674';
+const GENERAL_CHANNEL_ID = '1561291437063151732';
+const OMG_BOTS_CHANNEL_ID = '1561291436832329791';
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -366,8 +366,8 @@ client.on("messageCreate", (message) => {
   }
 });
 
-const welcomeChannelId = "1110480597333327934"
-const leaveChannelId = "1110480606548213780"
+const welcomeChannelId = "1561291436576743438"
+const leaveChannelId = "1561291436576743439"
 
 client.on('guildMemberAdd', member => {
   // Get the channel by ID
@@ -434,8 +434,10 @@ client.on('messageCreate', message => {
   const minLength = 8;      // ignore short messages
   const capsThreshold = 0.7; // 70% caps triggers it
 
-  const isStaff = message.member.roles.cache.some(role => role.name === ownerRoleName) || message.member.permissions.has('ADMINISTRATOR');
-
+  const isStaff = message.member &&
+    (message.member.roles.cache.some(role => role.name === ownerRoleName) ||
+     message.member.permissions.has('Administrator'));
+	
   if (message.author.bot || isStaff) return;
 
   const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
