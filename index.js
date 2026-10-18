@@ -295,15 +295,14 @@ if (command === 'clear') {
       const memeUrl = meme.postLink;
       const memeImage = meme.url;
       const memeTitle = meme.title;
-      const memeUpvotes = meme.ups;
       const memeNumComments = 0; // not provided by this API
 
       embed.setTitle(memeTitle);
       embed.setURL(memeUrl);
-      embed.setColor('RANDOM');
+      embed.setColor('Random');
       embed.setImage(memeImage);
       embed.setFooter({
-        text: `👍 ${memeUpvotes} 💬 ${memeNumComments}`
+        text: `💬 ${memeNumComments}`
       });
 
       message.channel.send({ embeds: [embed] });
@@ -403,13 +402,11 @@ client.on('messageCreate', async (message) => {
   });
 
   if (hasLink && !hasLinkPermission && !isAllowedLink && message.author.id !== client.user.id) {
-    message.delete();
-    message.reply(
-      'Sorry, you are not allowed to post links in this server! Your message has been deleted.'
-    )
+    message.reply('Sorry, you are not allowed to post links in this server! Your message has been deleted.')
       .then((replyMessage) => {
+        message.delete().catch(console.error);
         setTimeout(() => {
-          replyMessage.delete();
+          replyMessage.delete().catch(console.error);
         }, 15000);
       })
       .catch(console.error);
@@ -421,10 +418,9 @@ client.on('messageCreate', message => {
   const ownerRoleName = 'Owner';
 
   if (!message.author.bot && !message.member.roles.cache.some(role => role.name === ownerRoleName) && !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && swearWords.some(word => message.content.toLowerCase().match(`\\b${word}\\b`))) {
-    message.delete().catch(console.error);
-
     message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted.')
       .then(msg => {
+        message.delete().catch(console.error);
         setTimeout(() => {
           msg.delete().catch(console.error);
         }, 15000);
@@ -451,10 +447,9 @@ client.on('messageCreate', message => {
     const capsRatio = upperCount / letters.length;
 
     if (capsRatio >= capsThreshold) {
-      message.delete().catch(console.error);
-
       message.reply('Oops! Please avoid using excessive caps. Your message has been deleted.')
         .then(msg => {
+          message.delete().catch(console.error);
           setTimeout(() => {
             msg.delete().catch(console.error);
           }, 15000);
@@ -970,7 +965,7 @@ client.on('messageCreate', message => {
     message.reply('https://www.youtube.com/shorts/i2--25-N3vs');
   }
 });
-client.on('message', (message) => {
+client.on('messageCreate', (message) => {
   if (message.content.includes('@someone') && message.author !== client.user) {
     const membersArray = Array.from(message.guild.members.cache);
 
@@ -1002,7 +997,8 @@ client.on('message', (message) => {
 
 
 
-client.on('message', (message) => {
+
+client.on('messageCreate', (message) => {
   if (message.content.includes('AFK') && !message.author.bot) {
     const author = message.author;
     const content = message.content.replace('AFK', '');
@@ -1019,7 +1015,7 @@ client.on('message', (message) => {
   }
 });
 
-client.on('message', (message) => {
+client.on('messageCreate', (message) => {
   if (message.content.includes('BRB') && !message.author.bot) {
     const author = message.author;
     const content = message.content.replace('BRB', '');
@@ -1217,4 +1213,39 @@ client.on('messageCreate', async (message) => {
     }
   }
 });
+
+// Give role on reaction add
+client.on('messageReactionAdd', async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.partial) await reaction.fetch().catch(console.error);
+  if (reaction.message.partial) await reaction.message.fetch().catch(console.error);
+  if (reaction.message.channel.id !== RectonRolesChannelId) return;
+
+  const emoji = reaction.emoji.name;
+  const roleId = colorRoles[emoji] || osRoles[emoji];
+  if (!roleId) return;
+
+  const member = await reaction.message.guild.members.fetch(user.id).catch(console.error);
+  if (member) {
+    await member.roles.add(roleId).catch(console.error);
+  }
+});
+
+// Remove role on reaction remove
+client.on('messageReactionRemove', async (reaction, user) => {
+  if (user.bot) return;
+  if (reaction.partial) await reaction.fetch().catch(console.error);
+  if (reaction.message.partial) await reaction.message.fetch().catch(console.error);
+  if (reaction.message.channel.id !== RectonRolesChannelId) return;
+
+  const emoji = reaction.emoji.name;
+  const roleId = colorRoles[emoji] || osRoles[emoji];
+  if (!roleId) return;
+
+  const member = await reaction.message.guild.members.fetch(user.id).catch(console.error);
+  if (member) {
+    await member.roles.remove(roleId).catch(console.error);
+  }
+});
+
 client.login(process.env.TOKEN)
