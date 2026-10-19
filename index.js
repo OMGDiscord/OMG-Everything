@@ -413,11 +413,70 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-client.on('messageCreate', message => {
-  const swearWords = ['fuck', 'shit', 'wtf', 'fu`ck`', 'nigger', 'Fuxk', 'fk', 'gay', 'lasbian', 'lesbian', 'porn', 'fuсk', 'g@y', 'pedo', 'gayy', 'bigbootylesbianlover', 'bigbootylasbians', 'esex'];
-  const ownerRoleName = 'Owner';
+// --- UPGRADED SWEAR FILTER ---
 
-  if (!message.author.bot && !message.member.roles.cache.some(role => role.name === ownerRoleName) && !message.member.permissions.has(PermissionsBitField.Flags.Administrator) && swearWords.some(word => message.content.toLowerCase().match(`\\b${word}\\b`))) {
+// 1. Words checked as whole words (prevents banning "class", "assess", "afk", "title", etc.)
+const exactSwearWords = [
+  'fuck', 'fk', 'fck', 'fuxk', 'shit', 'sh1t', 'wtf', 'stfu', 'bitch', 'b1tch',
+  'ass', 'asshole', 'bastard', 'cunt', 'dick', 'cock', 'pussy', 'twat', 'prick',
+  'slut', 'whore', 'skank', 'porn', 'porno', 'nsfw', 'esex', 'sex', 'nude', 
+  'nudes', 'hentai', 'xxx', 'pedo', 'rape', 'rapist', 'incest', 'gay', 'gayy',
+  'lesbian', 'lasbian', 'fag', 'faggot', 'dyke', 'tranny', 'retard', 'kys'
+];
+
+// 2. Words checked even if hidden inside longer text or spaced out (e.g., "f.u.c.k" or "f u c k")
+const bypassSwearWords = [
+  'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 
+  'motherfucker', 'pedophile', 'bigbootylesbianlover', 'bigbootylasbians',
+  'blowjob', 'handjob', 'onlyfans', 'dildo', 'masturbate', 'bestiality', 'lolicon'
+];
+
+function normalizeMessage(text) {
+  return text
+    .toLowerCase()
+    // Replace Cyrillic lookalikes with Latin letters
+    .replace(/[\u0441\u03f2]/g, 'c') // Cyrillic 'с' -> Latin 'c' (fixes 'fuсk')
+    .replace(/[\u0430]/g, 'a')       // Cyrillic 'а' -> Latin 'a'
+    .replace(/[\u0435]/g, 'e')       // Cyrillic 'е' -> Latin 'e'
+    .replace(/[\u043e]/g, 'o')       // Cyrillic 'о' -> Latin 'o'
+    // Convert common leetspeak symbols
+    .replace(/@/g, 'a')
+    .replace(/\$|5/g, 's')
+    .replace(/1|!/g, 'i')
+    .replace(/0/g, 'o')
+    // Remove backticks, punctuation, and symbols so 'fu`ck`' becomes 'fuck'
+    .replace(/[^a-z0-9\s]/g, '');
+}
+
+client.on('messageCreate', message => {
+  if (message.author.bot || !message.guild || !message.member) return;
+
+  const ownerRoleName = 'Owner';
+  const isExempt = 
+    message.member.roles.cache.some(role => role.name === ownerRoleName) || 
+    message.member.permissions.has(PermissionsBitField.Flags.Administrator);
+
+  if (isExempt) return;
+
+  // Clean the message (strips backticks, converts @ to a, converts Cyrillic, etc.)
+  const cleanedText = normalizeMessage(message.content);
+  
+  // Also create a version with no spaces and collapsed repeating letters (turns "f u u u c k" into "fuck")
+  const collapsedText = cleanedText.replace(/\s+/g, '').replace(/(.)\1+/g, '$1');
+
+  // Check 1: Does a standalone word match exactSwearWords?
+  const wordsInMessage = cleanedText.split(/\s+/);
+  const hasExactSwear = wordsInMessage.some(word => {
+    const collapsedWord = word.replace(/(.)\1+/g, '$1'); // turns "gayyyy" into "gay"
+    return exactSwearWords.includes(word) || exactSwearWords.includes(collapsedWord);
+  });
+
+  // Check 2: Does the message contain a severe/longer word hidden with spaces/symbols?
+  const hasBypassSwear = bypassSwearWords.some(swear => 
+    cleanedText.includes(swear) || collapsedText.includes(swear)
+  );
+
+  if (hasExactSwear || hasBypassSwear) {
     message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted.')
       .then(msg => {
         message.delete().catch(console.error);
