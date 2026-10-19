@@ -415,20 +415,16 @@ client.on('messageCreate', async (message) => {
 
 // --- UPGRADED SWEAR FILTER ---
 
-// 1. Words checked as whole words (prevents banning "class", "assess", "afk", "title", etc.)
+// 1. Exact whole-word swears & slurs
 const exactSwearWords = [
   'fuck', 'fk', 'fck', 'fuxk', 'shit', 'sh1t', 'wtf', 'stfu', 'bitch', 'b1tch',
   'ass', 'asshole', 'bastard', 'cunt', 'dick', 'cock', 'pussy', 'twat', 'prick',
-  'slut', 'whore', 'skank', 'porn', 'porno', 'nsfw', 'esex', 'sex', 'nude', 
-  'nudes', 'hentai', 'xxx', 'pedo', 'rape', 'rapist', 'incest', 'gay', 'gayy',
-  'lesbian', 'lasbian', 'fag', 'faggot', 'dyke', 'tranny', 'retard', 'kys'
+  'slut', 'whore', 'skank', 'fag', 'faggot', 'dyke', 'tranny', 'retard'
 ];
 
-// 2. Words checked even if hidden inside longer text or spaced out (e.g., "f.u.c.k" or "f u c k")
+// 2. Severe swears & slurs checked even if spaced out or hidden in text
 const bypassSwearWords = [
-  'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 
-  'motherfucker', 'pedophile', 'bigbootylesbianlover', 'bigbootylasbians',
-  'blowjob', 'handjob', 'onlyfans', 'dildo', 'masturbate', 'bestiality', 'lolicon'
+  'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 'motherfucker', 'asshole'
 ];
 
 function normalizeMessage(text) {
