@@ -415,18 +415,31 @@ client.on('messageCreate', async (message) => {
 
 // --- UPGRADED SWEAR FILTER ---
 
-// 1. Exact whole-word swears & slurs
+// 1. Exact whole-word swears, slurs, & 18+ terms
 const exactSwearWords = [
+  // Swears & Slurs
   'fuck', 'fk', 'fck', 'fuxk', 'shit', 'sh1t', 'wtf', 'stfu', 'bitch', 'b1tch',
   'ass', 'asshole', 'bastard', 'cunt', 'dick', 'cock', 'pussy', 'twat', 'prick',
-  'slut', 'whore', 'skank', 'fag', 'faggot', 'dyke', 'tranny', 'retard'
+  'slut', 'whore', 'skank', 'fag', 'faggot', 'dyke', 'tranny', 'retard',
+
+  // 18+ / NSFW Terms
+  'porn', 'porno', 'nsfw', 'esex', 'sex', 'nude', 'nudes', 'hentai', 'xxx',
+  'pedo', 'rape', 'rapist', 'incest', 'boobs', 'tits', 'milf', 'horny', 'cum', 
+  'jizz', 'orgasm', 'erotic', 'fetish', 'stripper', 'hooker', 'prostitute', 
+  'anal', 'oral', 'threesome', 'gangbang', 'bdsm', 'bondage', 'kink', 'loli', 'shota'
 ];
 
-// 2. Severe swears & slurs checked even if spaced out or hidden in text
+// 2. Severe swears, slurs, & 18+ terms checked even if spaced out or hidden in text
 const bypassSwearWords = [
-  'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 'motherfucker', 'asshole'
-];
+  // Severe Swears & Slurs
+  'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 'motherfucker', 'asshole',
 
+  // 18+ / NSFW Terms
+  'porn', 'hentai', 'onlyfans', 'blowjob', 'handjob', 'footjob', 'rimjob', 
+  'dildo', 'vibrator', 'masturbate', 'masturbation', 'pedophile', 'bestiality', 
+  'lolicon', 'shotacon', 'camgirl', 'pornhub', 'xvideos', 'xnxx', 'rule34', 
+  'deepthroat', 'creampie', 'bukkake', 'bigbootylesbianlover', 'bigbootylasbians'
+];
 function normalizeMessage(text) {
   return text
     .toLowerCase()
