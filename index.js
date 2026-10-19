@@ -1027,21 +1027,30 @@ client.on('messageCreate', message => {
     message.reply('https://www.youtube.com/shorts/i2--25-N3vs');
   }
 });
+
 client.on('messageCreate', (message) => {
-  if (message.content.includes('@someone') && message.author !== client.user) {
-    const membersArray = Array.from(message.guild.members.cache);
+  // Ignore bots and DMs
+  if (message.author.bot || !message.guild) return;
+
+  if (message.content.includes('@someone')) {
+    const membersArray = Array.from(message.guild.members.cache.values());
 
     if (membersArray.length === 0) {
       message.channel.send("No members found in the guild.");
       return;
     }
 
-    let content = message.content;
+    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
+    let content = message.content
+      .replace(/@everyone/gi, '@\u200beveryone')
+      .replace(/@here/gi, '@\u200bhere')
+      .replace(/<@&\d+>/g, '@deleted-role');
 
+    // 2. Replace up to 5 instances of @someone with random members
     for (let i = 0; i < 5; i++) {
       if (content.includes('@someone')) {
         const randomIndex = Math.floor(Math.random() * membersArray.length);
-        const randomMember = membersArray[randomIndex][1];
+        const randomMember = membersArray[randomIndex];
 
         const mentionString = `<@${randomMember.user.id}>`;
         content = content.replace('@someone', mentionString);
@@ -1050,15 +1059,20 @@ client.on('messageCreate', (message) => {
       }
     }
 
-    message.delete(); // Deleting the original message
+    // 3. Delete the original message safely
+    message.delete().catch(console.error);
 
     const response = `<@${message.author.id}> said: ${content}`;
-    message.channel.send(response);
+
+    // 4. Send the message with allowedMentions locked down to ONLY user pings
+    message.channel.send({
+      content: response,
+      allowedMentions: {
+        parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
+      }
+    }).catch(console.error);
   }
 });
-
-
-
 
 client.on('messageCreate', (message) => {
   if (message.content.includes('AFK') && !message.author.bot) {
