@@ -698,25 +698,80 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
   }
 });
 
+
 const https = require('https');
 const fs = require('fs');
-const path = require('path'); // <- Add this line
-client.on('messageCreate', async (message) => {
-  if (message.attachments.size > 0) {
-    const attachment = message.attachments.first();
+const path = require('path');
+const crypto = require('crypto');
 
-    // Use path.join() to create a file path containing the 'uploads' sub-folder
-    const filePath = path.join('uploads', attachment.name);
-    const file = fs.createWriteStream(filePath);
+const uploadsDir = path.join(__dirname, 'uploads');
+
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+client.on('messageCreate', async (message) => {
+  if (message.attachments.size === 0) return;
+
+  for (const attachment of message.attachments.values()) {
+    // Keep the original filename, but add a unique ID to prevent overwrites.
+    const originalName = path.basename(attachment.name || 'attachment');
+    const ext = path.extname(originalName);
+    const name = path.basename(originalName, ext);
+    const uniqueName = `${name}-${crypto.randomUUID()}${ext}`;
+
+    const filePath = path.join(uploadsDir, uniqueName);
+    const tempPath = `${filePath}.part`;
+
+    const file = fs.createWriteStream(tempPath, { flags: 'wx' });
 
     https.get(attachment.url, (response) => {
+      if (response.statusCode !== 200) {
+        response.resume();
+        file.destroy();
+        fs.rm(tempPath, { force: true }, () => {});
+        console.error(
+          `Failed to download ${originalName}: HTTP ${response.statusCode}`
+        );
+        return;
+      }
+
       response.pipe(file);
+
       file.on('finish', () => {
-        console.log(`File ${attachment.name} saved to disk.`);
+        file.close((err) => {
+          if (err) {
+            console.error(`Failed to close ${uniqueName}:`, err);
+            return;
+          }
+
+          fs.rename(tempPath, filePath, (renameErr) => {
+            if (renameErr) {
+              console.error(`Failed to save ${uniqueName}:`, renameErr);
+              return;
+            }
+
+            console.log(`File ${uniqueName} saved to disk.`);
+          });
+        });
       });
+
+      response.on('error', (err) => {
+        file.destroy();
+        fs.rm(tempPath, { force: true }, () => {});
+        console.error(`Download failed for ${originalName}:`, err);
+      });
+
+      file.on('error', (err) => {
+        fs.rm(tempPath, { force: true }, () => {});
+        console.error(`File write failed for ${uniqueName}:`, err);
+      });
+    }).on('error', (err) => {
+      file.destroy();
+      fs.rm(tempPath, { force: true }, () => {});
+      console.error(`Request failed for ${originalName}:`, err);
     });
   }
 });
+
 
 client.on('messageCreate', message => {
   if (message.content.startsWith('/reasons-why-to-never-upgrade-to-windows-11')) {
