@@ -1,5 +1,7 @@
 const Discord = require("discord.js");
 require("dotenv").config();
+const fs = require('fs');
+const path = require('path');
 const {
   Client,
   GatewayIntentBits,
@@ -17,7 +19,7 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessageReactions
-],
+  ],
   partials: [
     Partials.Message,
     Partials.Channel,
@@ -97,21 +99,21 @@ client.on('interactionCreate', async interaction => {
         { name: '/ping', value: 'Pings the bot to check if it is working' },
         { name: '/userinfo', value: 'To see Your or A user Info' },
         { name: '/meme', value: 'Displays a random meme from meme api' },
-	      { name: '/upload', value: 'Uploads a secrect File' },
+        { name: '/upload', value: 'Uploads a secrect File' },
         { name: '/reasons-why-to-never-upgrade-to-windows-11', value: 'Bad but pepole asked for it' },
 
         // Add more command fields here if needed
-        );
+      );
 
-        // Reply to the interaction with the embed
-        interaction.reply({ embeds: [embed] });
-      }
+    // Reply to the interaction with the embed
+    interaction.reply({ embeds: [embed] });
+  }
   if (interaction.commandName === 'adminhelp') {
     const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setTitle('Bot Admin Commands')
-        .setDescription('Here are the available admin commands for this bot:')
-        .addFields(
+      .setColor('#0099ff')
+      .setTitle('Bot Admin Commands')
+      .setDescription('Here are the available admin commands for this bot:')
+      .addFields(
         { name: '/adminhelp', value: 'Displays this list of commands' },
         { name: '/giverole', value: 'Gives a role to a User' },
         { name: '/removerole', value: 'Removes a Role from User' },
@@ -120,12 +122,12 @@ client.on('interactionCreate', async interaction => {
         { name: '/setupcolors', value: 'Sends the color reaction roles menu' },
         { name: '/setuposes', value: 'Sends the OS reaction roles menu' },
 
-            // Add more command fields here if needed
-            );
-    
-            // Reply to the interaction with the embed
-          interaction.reply({ embeds: [embed] });
-      }
+        // Add more command fields here if needed
+      );
+
+    // Reply to the interaction with the embed
+    interaction.reply({ embeds: [embed] });
+  }
   if (interaction.commandName === 'ping') {
     const startTime = Date.now();
     await interaction.reply({ content: 'Pinging...', fetchReply: true });
@@ -136,13 +138,13 @@ client.on('interactionCreate', async interaction => {
     const user = interaction.options.getUser('target') || interaction.member.user;
     const avatarURL = user.displayAvatarURL();
     const createdAt = new Date(user.createdAt);
-    
+
     let response = `Username: ${user.username}\nID: ${user.id}\nAvatar: ${avatarURL}\nAccount created on: ${createdAt}`;
-    
+
     if (interaction.options.getUser('target')) {
       response = `<@${user.id}>'s information:\n${response}`;
     }
-  
+
     await interaction.reply(response);
   }
   // Nickname removeable for all pepole
@@ -185,51 +187,51 @@ client.on("messageCreate", (message) => {
     message.channel.send("Hello, World!");
   }
   if (command === 'enderman') {
-  message.channel.send('Here is enderman Secrect Song.');
-  message.channel.send({
-    files: ['./d.mp3']
-});
+    message.channel.send('Here is enderman Secrect Song.');
+    message.channel.send({
+      files: ['./d.mp3']
+    });
   }
-if (command === 'userinfo') {
-  if (message.mentions.users.first()) {
-    const taggedUser = message.mentions.users.first();
-    const avatarURL = taggedUser.displayAvatarURL();
-    const createdAt = new Date(taggedUser.createdAt);
+  if (command === 'userinfo') {
+    if (message.mentions.users.first()) {
+      const taggedUser = message.mentions.users.first();
+      const avatarURL = taggedUser.displayAvatarURL();
+      const createdAt = new Date(taggedUser.createdAt);
 
-    message.reply(`Username: ${taggedUser.username}\nID: ${taggedUser.id}\nAvatar: ${avatarURL}\nAccount created on: ${createdAt}`);
-  } else {
-    const avatarURL = message.author.displayAvatarURL();
-    const createdAt = new Date(message.author.createdAt);
+      message.reply(`Username: ${taggedUser.username}\nID: ${taggedUser.id}\nAvatar: ${avatarURL}\nAccount created on: ${createdAt}`);
+    } else {
+      const avatarURL = message.author.displayAvatarURL();
+      const createdAt = new Date(message.author.createdAt);
 
-    message.reply(`Your username: ${message.author.username}\nYour ID: ${message.author.id}\nYour avatar: ${avatarURL}\nAccount created on: ${createdAt}`);
+      message.reply(`Your username: ${message.author.username}\nYour ID: ${message.author.id}\nYour avatar: ${avatarURL}\nAccount created on: ${createdAt}`);
+    }
   }
-}
-if (command === 'ping') {
-  const startTime = Date.now();
-  message.channel.send('Pinging...')
-    .then((msg) => {
-      const endTime = Date.now();
-      msg.edit(`Pong! Latency is ${endTime - startTime}ms`);
-    })
-    .catch(console.error);
-}
-if (command === 'clear') {
-  if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-    return message.reply('You do not have permission to use this command.');
+  if (command === 'ping') {
+    const startTime = Date.now();
+    message.channel.send('Pinging...')
+      .then((msg) => {
+        const endTime = Date.now();
+        msg.edit(`Pong! Latency is ${endTime - startTime}ms`);
+      })
+      .catch(console.error);
   }
+  if (command === 'clear') {
+    if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      return message.reply('You do not have permission to use this command.');
+    }
 
-  const deleteCount = parseInt(args[0], 10) + 1;
+    const deleteCount = parseInt(args[0], 10) + 1;
 
-  if (!deleteCount || deleteCount < 2 || deleteCount > 100) {
-    return message.reply('Please enter a number between 1 and 99 for the number of messages to delete');
+    if (!deleteCount || deleteCount < 2 || deleteCount > 100) {
+      return message.reply('Please enter a number between 1 and 99 for the number of messages to delete');
+    }
+
+    message.channel.bulkDelete(deleteCount, true)
+      .then(deleted => console.log(`Deleted ${deleted.size} messages.`))
+      .catch(err => message.reply(`Something went wrong: ${err}`));
   }
-
-  message.channel.bulkDelete(deleteCount, true)
-    .then(deleted => console.log(`Deleted ${deleted.size} messages.`))
-    .catch(err => message.reply(`Something went wrong: ${err}`));
-}
   if (command === 'giverole') {
-     // Check if the user has permission to use the command
+    // Check if the user has permission to use the command
     if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
       message.reply('You do not have permission to use this command.');
       return;
@@ -255,7 +257,7 @@ if (command === 'clear') {
         message.channel.send('An error occurred while giving the role.');
       });
   }
-  
+
   if (command === 'removerole') {
     // Check if the user has permission to use the command
     if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
@@ -289,31 +291,31 @@ if (command === 'clear') {
     const embed = new EmbedBuilder();
 
     axios.get('https://meme-api.com/gimme/memes')
-    .then(response => {
-      const meme = response.data;
+      .then(response => {
+        const meme = response.data;
 
-      const memeUrl = meme.postLink;
-      const memeImage = meme.url;
-      const memeTitle = meme.title;
-      const memeUpvotes = meme.ups;
+        const memeUrl = meme.postLink;
+        const memeImage = meme.url;
+        const memeTitle = meme.title;
+        const memeUpvotes = meme.ups;
 
-      embed.setTitle(memeTitle);
-      embed.setURL(memeUrl);
-      embed.setColor('Random');
-      embed.setImage(memeImage);
-      embed.setFooter({
-        text: `👍 ${memeUpvotes}`
-      });
+        embed.setTitle(memeTitle);
+        embed.setURL(memeUrl);
+        embed.setColor('Random');
+        embed.setImage(memeImage);
+        embed.setFooter({
+          text: `👍 ${memeUpvotes}`
+        });
 
-      message.channel.send({ embeds: [embed] });
-    })
-    .catch(console.error);
+        message.channel.send({ embeds: [embed] });
+      })
+      .catch(console.error);
   }
-if (command === 'upload') {
-  message.channel.send('Here is enderman Secrect Song.');
-  message.channel.send({
-    files: ['./d.mp3']
-});
+  if (command === 'upload') {
+    message.channel.send('Here is enderman Secrect Song.');
+    message.channel.send({
+      files: ['./d.mp3']
+    });
   }
 });
 
@@ -375,7 +377,7 @@ client.on("messageCreate", (message) => {
 client.on('guildMemberAdd', member => {
   // Get the channel by ID
   const channel = member.guild.channels.cache.get(welcomeChannelId);
-  
+
   if (channel) {
     // Send a welcome message to the channel
     channel.send(`${member} Welcome to the server!`);
@@ -390,7 +392,7 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return; // Ignore messages from other bots and self
   if (!message.guild) return; // Ignore DMs
 
-  const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com' , 'klipy.com' , 'cdn.discordapp.com'];
+  const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com', 'klipy.com', 'cdn.discordapp.com'];
   const hasLinkPermission = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
   const messageContent = message.content.toLowerCase(); // Convert message content to lowercase for case-insensitive matching
 
@@ -424,8 +426,8 @@ const exactSwearWords = [
 
   // 18+ / NSFW Terms
   'porn', 'porno', 'nsfw', 'esex', 'sex', 'nude', 'nudes', 'hentai', 'xxx',
-  'pedo', 'rape', 'rapist', 'incest', 'boobs', 'tits', 'milf', 'horny', 'cum', 
-  'jizz', 'orgasm', 'erotic', 'fetish', 'stripper', 'hooker', 'prostitute', 
+  'pedo', 'rape', 'rapist', 'incest', 'boobs', 'tits', 'milf', 'horny', 'cum',
+  'jizz', 'orgasm', 'erotic', 'fetish', 'stripper', 'hooker', 'prostitute',
   'anal', 'oral', 'threesome', 'gangbang', 'bdsm', 'bondage', 'kink', 'loli', 'shota'
 ];
 
@@ -435,9 +437,9 @@ const bypassSwearWords = [
   'fuck', 'shit', 'bitch', 'nigger', 'nigga', 'faggot', 'cunt', 'motherfucker', 'asshole',
 
   // 18+ / NSFW Terms
-  'porn', 'hentai', 'onlyfans', 'blowjob', 'handjob', 'footjob', 'rimjob', 
-  'dildo', 'vibrator', 'masturbate', 'masturbation', 'pedophile', 'bestiality', 
-  'lolicon', 'shotacon', 'camgirl', 'pornhub', 'xvideos', 'xnxx', 'rule34', 
+  'porn', 'hentai', 'onlyfans', 'blowjob', 'handjob', 'footjob', 'rimjob',
+  'dildo', 'vibrator', 'masturbate', 'masturbation', 'pedophile', 'bestiality',
+  'lolicon', 'shotacon', 'camgirl', 'pornhub', 'xvideos', 'xnxx', 'rule34',
   'deepthroat', 'creampie', 'bukkake', 'bigbootylesbianlover', 'bigbootylasbians'
 ];
 function normalizeMessage(text) {
@@ -457,19 +459,78 @@ function normalizeMessage(text) {
     .replace(/[^a-z0-9\s]/g, '');
 }
 
-client.on('messageCreate', message => {
-  if (message.author.bot || !message.guild || !message.member) return;
+const probationFilePath = path.join(__dirname, 'swear_probation.json');
+
+function loadProbationData() {
+  try {
+    if (fs.existsSync(probationFilePath)) {
+      const data = fs.readFileSync(probationFilePath, 'utf8');
+      return new Map(Object.entries(JSON.parse(data)));
+    }
+  } catch (err) {
+    console.error('Error loading swear probation data:', err);
+  }
+  return new Map();
+}
+
+function saveProbationData(map) {
+  try {
+    const obj = Object.fromEntries(map);
+    fs.writeFileSync(probationFilePath, JSON.stringify(obj, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error saving swear probation data:', err);
+  }
+}
+
+const swearProbation = loadProbationData();
+
+async function getFriendlyRole(guild) {
+  if (!guild) return null;
+  const envRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
+  if (envRoleId) {
+    const cachedRole = guild.roles.cache.get(envRoleId);
+    if (cachedRole) return cachedRole;
+    try {
+      const fetchedRole = await guild.roles.fetch(envRoleId);
+      if (fetchedRole) return fetchedRole;
+    } catch (_) { }
+  }
+
+  let role = guild.roles.cache.find(r =>
+    r.name.toLowerCase() === 'friendly' || r.name.toLowerCase() === 'frineda'
+  );
+  if (!role) {
+    role = guild.roles.cache.find(r => r.name.toLowerCase().includes('friendly'));
+  }
+  if (!role) {
+    try {
+      const fetchedRoles = await guild.roles.fetch();
+      if (fetchedRoles) {
+        role = fetchedRoles.find(r =>
+          r.name.toLowerCase() === 'friendly' || r.name.toLowerCase() === 'frineda'
+        ) || fetchedRoles.find(r => r.name.toLowerCase().includes('friendly'));
+      }
+    } catch (_) { }
+  }
+  return role || null;
+}
+
+client.on('messageCreate', async message => {
+  if (message.author.bot || !message.guild) return;
+
+  const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+  if (!member) return;
 
   const ownerRoleName = 'Owner';
-  const isExempt = 
-    message.member.roles.cache.some(role => role.name === ownerRoleName) || 
-    message.member.permissions.has(PermissionsBitField.Flags.Administrator);
+  const isExempt =
+    member.roles.cache.some(role => role.name === ownerRoleName) ||
+    member.permissions.has(PermissionsBitField.Flags.Administrator);
 
   if (isExempt) return;
 
   // Clean the message (strips backticks, converts @ to a, converts Cyrillic, etc.)
   const cleanedText = normalizeMessage(message.content);
-  
+
   // Also create a version with no spaces and collapsed repeating letters (turns "f u u u c k" into "fuck")
   const collapsedText = cleanedText.replace(/\s+/g, '').replace(/(.)\1+/g, '$1');
 
@@ -481,12 +542,24 @@ client.on('messageCreate', message => {
   });
 
   // Check 2: Does the message contain a severe/longer word hidden with spaces/symbols?
-  const hasBypassSwear = bypassSwearWords.some(swear => 
+  const hasBypassSwear = bypassSwearWords.some(swear =>
     cleanedText.includes(swear) || collapsedText.includes(swear)
   );
 
+  const probationKey = `${message.guild.id}:${message.author.id}`;
+
   if (hasExactSwear || hasBypassSwear) {
-    message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted.')
+    // Reset clean message counter to 0
+    swearProbation.set(probationKey, 0);
+    saveProbationData(swearProbation);
+
+    // Remove the Friendly role if the member has it
+    const friendlyRole = await getFriendlyRole(message.guild);
+    if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
+      await member.roles.remove(friendlyRole, 'Lost Friendly role for swearing').catch(console.error);
+    }
+
+    message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted and you have lost your Friendly role. Send 3 messages without swearing to get it back.')
       .then(msg => {
         message.delete().catch(console.error);
         setTimeout(() => {
@@ -494,6 +567,43 @@ client.on('messageCreate', message => {
         }, 15000);
       })
       .catch(console.error);
+    return;
+  }
+
+  // If user is in probation and sent a message without any swear words
+  if (swearProbation.has(probationKey)) {
+    const friendlyRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
+    const cachedFriendly = member.roles.cache.has(friendlyRoleId) || member.roles.cache.find(r =>
+      r.name.toLowerCase() === 'friendly' || r.name.toLowerCase() === 'frineda'
+    );
+
+    // If member already has the friendly role (e.g. manually restored), clear probation
+    if (cachedFriendly) {
+      swearProbation.delete(probationKey);
+      saveProbationData(swearProbation);
+      return;
+    }
+
+    const currentCount = (swearProbation.get(probationKey) || 0) + 1;
+
+    if (currentCount >= 3) {
+      swearProbation.delete(probationKey);
+      saveProbationData(swearProbation);
+
+      const friendlyRole = await getFriendlyRole(message.guild);
+      if (friendlyRole && !member.roles.cache.has(friendlyRole.id)) {
+        await member.roles.add(friendlyRole, 'Regained Friendly role after 3 clean messages').catch(console.error);
+      }
+
+      message.reply('You have sent 3 messages without swearing! Your Friendly role has been restored.')
+        .then(msg => {
+          setTimeout(() => msg.delete().catch(() => { }), 15000);
+        })
+        .catch(console.error);
+    } else {
+      swearProbation.set(probationKey, currentCount);
+      saveProbationData(swearProbation);
+    }
   }
 });
 
@@ -504,8 +614,8 @@ client.on('messageCreate', message => {
 
   const isStaff = message.member &&
     (message.member.roles.cache.some(role => role.name === ownerRoleName) ||
-     message.member.permissions.has(PermissionsBitField.Flags.Administrator));
-	
+      message.member.permissions.has(PermissionsBitField.Flags.Administrator));
+
   if (message.author.bot || isStaff) return;
 
   const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
@@ -642,8 +752,8 @@ client.on('messageUpdate', async (oldMessage, newMessage) => {
   if (!newMessage.guild) return;
 
   // fetch if partial (prevents missing content issues)
-  if (oldMessage.partial) await oldMessage.fetch().catch(() => {});
-  if (newMessage.partial) await newMessage.fetch().catch(() => {});
+  if (oldMessage.partial) await oldMessage.fetch().catch(() => { });
+  if (newMessage.partial) await newMessage.fetch().catch(() => { });
 
   const author = newMessage.author || oldMessage.author;
   if (!author) return;
@@ -676,7 +786,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
       modLogChannel.send(`User ${newMember.displayName} has been given the role(s): ${addedRoles.map(role => role.name).join(', ')}`);
     }
   }
-  
+
   // Check if roles were removed from the member
   const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
   if (removedRoles.size > 0) {
@@ -700,8 +810,6 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 
 
 const https = require('https');
-const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -727,7 +835,7 @@ client.on('messageCreate', async (message) => {
       if (response.statusCode !== 200) {
         response.resume();
         file.destroy();
-        fs.rm(tempPath, { force: true }, () => {});
+        fs.rm(tempPath, { force: true }, () => { });
         console.error(
           `Failed to download ${originalName}: HTTP ${response.statusCode}`
         );
@@ -756,17 +864,17 @@ client.on('messageCreate', async (message) => {
 
       response.on('error', (err) => {
         file.destroy();
-        fs.rm(tempPath, { force: true }, () => {});
+        fs.rm(tempPath, { force: true }, () => { });
         console.error(`Download failed for ${originalName}:`, err);
       });
 
       file.on('error', (err) => {
-        fs.rm(tempPath, { force: true }, () => {});
+        fs.rm(tempPath, { force: true }, () => { });
         console.error(`File write failed for ${uniqueName}:`, err);
       });
     }).on('error', (err) => {
       file.destroy();
-      fs.rm(tempPath, { force: true }, () => {});
+      fs.rm(tempPath, { force: true }, () => { });
       console.error(`Request failed for ${originalName}:`, err);
     });
   }
@@ -812,196 +920,196 @@ client.on('messageCreate', message => {
       'Settings app still incomplete vs Control Panel.',
       'Mixed UI design language.',
       'Reduced drag-and-drop functionality (early versions).',
-          'More disk space usage.',
-          'Longer update installation times.',
-          'More frequent feature updates.',
-          'Background indexing more aggressive.',
-          'System tray changes confuse users.',
-          'Bluetooth bugs reported by users.',
-          'Wi-Fi instability in some builds.',
-          'Printer compatibility issues.',
-          'Audio driver conflicts.',
-          'Sleep/hibernate issues on some systems.',
-          'Battery drain on laptops.',
-          'Touch UI not ideal for all devices.',
-          'Multi-monitor bugs reported.',
-          'Scaling issues on high-DPI displays.',
-          'Window snapping not liked by everyone.',
-          'Snap layouts can be intrusive.',
-          'Gaming overlays conflicts.',
-          'Anti-cheat compatibility issues.',
-          'Legacy games may break.',
-          'Reduced support for 32-bit apps long-term.',
-          'More reliance on cloud services.',
-          'File associations reset after updates.',
-          'Settings reset unexpectedly.',
-          'Network sharing issues.',
-          'SMB quirks in some builds.',
-          'VPN compatibility problems.',
-          'Firewall resets after updates.',
-          'Group policy changes affect control.',
-          'Enterprise features locked behind editions.',
-          'More bloatware preinstalled.',
-          'Third-party antivirus conflicts.',
-          'Slower boot on older hardware.',
-          'Longer shutdown times reported.',
-          'SSD wear concerns due to logging.',
-          'Indexing affects disk performance.',
-          'More services start automatically.',
-          'Harder to disable features permanently.',
-          'Windows Store dependency increased.',
-          'App sandboxing limitations.',
-          'Inconsistent notification behavior.',
-          'Focus assist not always reliable.',
-          'Calendar and mail integration forced.',
-          'Search function sometimes slower.',
-          'Web search integrated into local search.',
-          'Privacy settings scattered.',
-          'Updates sometimes re-enable disabled features.',
-          'Driver auto-install issues.',
-          'GPU scheduling bugs.',
-          'Overlays causing stutter.',
-          'HDR issues in some games.',
-          'Color profile inconsistencies.',
-          'Bluetooth audio lag issues.',
-          'Microphone permission bugs.',
-          'Camera access resets.',
-          'Security prompts more frequent.',
-          'UAC inconsistencies.',
-          'App compatibility mode unreliable.',
-          'Virtual machines slower on some setups.',
-          'Hyper-V conflicts with other software.',
-          'Docker issues reported.',
-          'WSL bugs in some versions.',
-          'File system bugs occasionally reported.',
-          'Explorer crashes in some builds.',
-          'Memory leaks reported.',
-          'High CPU usage from system processes.',
-          'Task Manager redesign not liked by all.',
-          'Harder to access advanced tools quickly.',
-          'Run dialog usage less common.',
-          'Keyboard shortcuts changed or inconsistent.',
-          'Accessibility features need adjustment.',
-          'Narrator changes not preferred by all.',
-          'Voice typing not always accurate.',
-          'Language packs issues.',
-          'IME bugs for some languages.',
-          'Regional settings reset issues.',
-          'Time sync bugs reported.',
-          'Update rollback sometimes fails.',
-          'Recovery tools less straightforward.',
-          'Safe mode harder to access.',
-          'BIOS/UEFI compatibility issues.',
-          'Bootloader quirks in dual-boot setups.',
-          'Linux dual-boot complications.',
-          'Secure Boot conflicts with custom OS.',
-          'Custom kernels unsupported.',
-          'Reduced control over updates scheduling.',
-          'No easy way to fully disable updates.',
-          'Feature updates forced eventually.',
-          'More telemetry services running.',
-          'Cloud sync forced in many apps.',
-          'OneDrive integration intrusive.',
-          'Desktop icons may auto-sync unexpectedly.',
-          'File conflicts with cloud sync.',
-          'Offline usage less prioritized.',
-          'Dependency on Microsoft services.',
-          'Account lockouts affect system access.',
-          'Passwordless login confusion.',
-          'PIN login bugs reported.',
-          'Windows Hello inconsistencies.',
-          'Fingerprint issues on some devices.',
-          'Face unlock unreliable in low light.',
-          'Security patches occasionally break features.',
-          'Patch Tuesday instability complaints.',
-          'Rollback windows limited.',
-          'Update errors hard to troubleshoot.',
-          'Error codes unclear.',
-          'Logs difficult to interpret.',
-          'Debugging harder for average users.',
-          'Power settings reset after updates.',
-          'Custom power plans overridden.',
-          'Fan curves affected on laptops.',
-          'Thermal management issues.',
-          'CPU throttling bugs reported.',
-          'GPU utilization inconsistencies.',
-          'Background apps harder to control.',
-          'Startup apps auto-enabled sometimes.',
-          'Task Scheduler changes.',
-          'Services harder to manage via UI.',
-          'Legacy tools deprecated.',
-          'Control Panel slowly removed.',
-          'Mixed settings between apps.',
-          'UI animations consume resources.',
-          'Transparency effects reduce performance.',
-          'Rounded corners waste screen space.',
-          'Compact UI options limited.',
-          'Tablet mode changes not ideal.',
-          'Gesture support inconsistent.',
-          'Pen input bugs reported.',
-          'Ink workspace removed/changed.',
-          'Clipboard history bugs.',
-          'Emoji panel changes not liked by all.',
-          'Screenshot tool inconsistencies.',
-          'Snipping tool redesign confusion.',
-          'File copy speed inconsistencies.',
-          'Network transfer slowdowns.',
-          'SMB throttling issues.',
-          'Drive mapping bugs.',
-          'External drive detection issues.',
-          'USB device compatibility problems.',
-          'Thunderbolt issues on some systems.',
-          'Docking station problems.',
-          'Sleep resume bugs with peripherals.',
-          'Keyboard input lag reported.',
-          'Mouse acceleration issues.',
-          'Gaming input delay concerns.',
-          'Fullscreen optimizations problems.',
-          'VSync inconsistencies.',
-          'Frame pacing issues.',
-          'Overlay conflicts (Discord, etc.).',
-          'Driver updates break stability.',
-          'Beta features pushed to stable users.',
-          'Insider features leaking into release builds.',
-          'Inconsistent feature rollout.',
-          'A/B testing affects experience.',
-          'Documentation sometimes outdated.',
-          'Support articles confusing.',
-          'Troubleshooter tools ineffective.',
-          'System restore unreliable for some users.',
-          'Backup tools limited compared to alternatives.',
-          'File History changes reduce usability.',
-          'Restore points disabled by default.',
-          'Disk cleanup replaced by Settings UI.',
-          'Advanced cleanup harder to access.',
-          'Storage sense auto-deletes files.',
-          'Downloads folder cleanup surprises users.',
-          'Temp files mismanaged.',
-          'Cache buildup issues.',
-          'Edge forced updates.',
-          'Browser default resets.',
-          'PDF handling forced to Edge.',
-          'Link handling overridden.',
-          'Search results biased toward Edge.',
-          'Widgets consume resources in background.',
-          'News feed clutter in widgets.',
-          'Weather widget inaccuracies.',
-          'Taskbar widgets not removable easily (earlier builds).',
-          'Start menu recommendations unwanted.',
-          'Recent files exposure privacy concern.',
-          'App suggestions intrusive.',
-          'Preinstalled apps difficult to remove.',
-          'Xbox services unnecessary for some users.',
-          'Gaming services always running.',
-          'Background telemetry network usage.',
-          'Bandwidth usage from updates.',
-          'Delivery Optimization uses network resources.',
-          'Peer-to-peer update sharing concerns.',
-          'Firewall prompts confusing.',
-          'Network reset needed more often.',
-          'Troubleshooting requires online help.',
-          'Offline fixes limited.',
-          'System feels less “lightweight” overall.'
+      'More disk space usage.',
+      'Longer update installation times.',
+      'More frequent feature updates.',
+      'Background indexing more aggressive.',
+      'System tray changes confuse users.',
+      'Bluetooth bugs reported by users.',
+      'Wi-Fi instability in some builds.',
+      'Printer compatibility issues.',
+      'Audio driver conflicts.',
+      'Sleep/hibernate issues on some systems.',
+      'Battery drain on laptops.',
+      'Touch UI not ideal for all devices.',
+      'Multi-monitor bugs reported.',
+      'Scaling issues on high-DPI displays.',
+      'Window snapping not liked by everyone.',
+      'Snap layouts can be intrusive.',
+      'Gaming overlays conflicts.',
+      'Anti-cheat compatibility issues.',
+      'Legacy games may break.',
+      'Reduced support for 32-bit apps long-term.',
+      'More reliance on cloud services.',
+      'File associations reset after updates.',
+      'Settings reset unexpectedly.',
+      'Network sharing issues.',
+      'SMB quirks in some builds.',
+      'VPN compatibility problems.',
+      'Firewall resets after updates.',
+      'Group policy changes affect control.',
+      'Enterprise features locked behind editions.',
+      'More bloatware preinstalled.',
+      'Third-party antivirus conflicts.',
+      'Slower boot on older hardware.',
+      'Longer shutdown times reported.',
+      'SSD wear concerns due to logging.',
+      'Indexing affects disk performance.',
+      'More services start automatically.',
+      'Harder to disable features permanently.',
+      'Windows Store dependency increased.',
+      'App sandboxing limitations.',
+      'Inconsistent notification behavior.',
+      'Focus assist not always reliable.',
+      'Calendar and mail integration forced.',
+      'Search function sometimes slower.',
+      'Web search integrated into local search.',
+      'Privacy settings scattered.',
+      'Updates sometimes re-enable disabled features.',
+      'Driver auto-install issues.',
+      'GPU scheduling bugs.',
+      'Overlays causing stutter.',
+      'HDR issues in some games.',
+      'Color profile inconsistencies.',
+      'Bluetooth audio lag issues.',
+      'Microphone permission bugs.',
+      'Camera access resets.',
+      'Security prompts more frequent.',
+      'UAC inconsistencies.',
+      'App compatibility mode unreliable.',
+      'Virtual machines slower on some setups.',
+      'Hyper-V conflicts with other software.',
+      'Docker issues reported.',
+      'WSL bugs in some versions.',
+      'File system bugs occasionally reported.',
+      'Explorer crashes in some builds.',
+      'Memory leaks reported.',
+      'High CPU usage from system processes.',
+      'Task Manager redesign not liked by all.',
+      'Harder to access advanced tools quickly.',
+      'Run dialog usage less common.',
+      'Keyboard shortcuts changed or inconsistent.',
+      'Accessibility features need adjustment.',
+      'Narrator changes not preferred by all.',
+      'Voice typing not always accurate.',
+      'Language packs issues.',
+      'IME bugs for some languages.',
+      'Regional settings reset issues.',
+      'Time sync bugs reported.',
+      'Update rollback sometimes fails.',
+      'Recovery tools less straightforward.',
+      'Safe mode harder to access.',
+      'BIOS/UEFI compatibility issues.',
+      'Bootloader quirks in dual-boot setups.',
+      'Linux dual-boot complications.',
+      'Secure Boot conflicts with custom OS.',
+      'Custom kernels unsupported.',
+      'Reduced control over updates scheduling.',
+      'No easy way to fully disable updates.',
+      'Feature updates forced eventually.',
+      'More telemetry services running.',
+      'Cloud sync forced in many apps.',
+      'OneDrive integration intrusive.',
+      'Desktop icons may auto-sync unexpectedly.',
+      'File conflicts with cloud sync.',
+      'Offline usage less prioritized.',
+      'Dependency on Microsoft services.',
+      'Account lockouts affect system access.',
+      'Passwordless login confusion.',
+      'PIN login bugs reported.',
+      'Windows Hello inconsistencies.',
+      'Fingerprint issues on some devices.',
+      'Face unlock unreliable in low light.',
+      'Security patches occasionally break features.',
+      'Patch Tuesday instability complaints.',
+      'Rollback windows limited.',
+      'Update errors hard to troubleshoot.',
+      'Error codes unclear.',
+      'Logs difficult to interpret.',
+      'Debugging harder for average users.',
+      'Power settings reset after updates.',
+      'Custom power plans overridden.',
+      'Fan curves affected on laptops.',
+      'Thermal management issues.',
+      'CPU throttling bugs reported.',
+      'GPU utilization inconsistencies.',
+      'Background apps harder to control.',
+      'Startup apps auto-enabled sometimes.',
+      'Task Scheduler changes.',
+      'Services harder to manage via UI.',
+      'Legacy tools deprecated.',
+      'Control Panel slowly removed.',
+      'Mixed settings between apps.',
+      'UI animations consume resources.',
+      'Transparency effects reduce performance.',
+      'Rounded corners waste screen space.',
+      'Compact UI options limited.',
+      'Tablet mode changes not ideal.',
+      'Gesture support inconsistent.',
+      'Pen input bugs reported.',
+      'Ink workspace removed/changed.',
+      'Clipboard history bugs.',
+      'Emoji panel changes not liked by all.',
+      'Screenshot tool inconsistencies.',
+      'Snipping tool redesign confusion.',
+      'File copy speed inconsistencies.',
+      'Network transfer slowdowns.',
+      'SMB throttling issues.',
+      'Drive mapping bugs.',
+      'External drive detection issues.',
+      'USB device compatibility problems.',
+      'Thunderbolt issues on some systems.',
+      'Docking station problems.',
+      'Sleep resume bugs with peripherals.',
+      'Keyboard input lag reported.',
+      'Mouse acceleration issues.',
+      'Gaming input delay concerns.',
+      'Fullscreen optimizations problems.',
+      'VSync inconsistencies.',
+      'Frame pacing issues.',
+      'Overlay conflicts (Discord, etc.).',
+      'Driver updates break stability.',
+      'Beta features pushed to stable users.',
+      'Insider features leaking into release builds.',
+      'Inconsistent feature rollout.',
+      'A/B testing affects experience.',
+      'Documentation sometimes outdated.',
+      'Support articles confusing.',
+      'Troubleshooter tools ineffective.',
+      'System restore unreliable for some users.',
+      'Backup tools limited compared to alternatives.',
+      'File History changes reduce usability.',
+      'Restore points disabled by default.',
+      'Disk cleanup replaced by Settings UI.',
+      'Advanced cleanup harder to access.',
+      'Storage sense auto-deletes files.',
+      'Downloads folder cleanup surprises users.',
+      'Temp files mismanaged.',
+      'Cache buildup issues.',
+      'Edge forced updates.',
+      'Browser default resets.',
+      'PDF handling forced to Edge.',
+      'Link handling overridden.',
+      'Search results biased toward Edge.',
+      'Widgets consume resources in background.',
+      'News feed clutter in widgets.',
+      'Weather widget inaccuracies.',
+      'Taskbar widgets not removable easily (earlier builds).',
+      'Start menu recommendations unwanted.',
+      'Recent files exposure privacy concern.',
+      'App suggestions intrusive.',
+      'Preinstalled apps difficult to remove.',
+      'Xbox services unnecessary for some users.',
+      'Gaming services always running.',
+      'Background telemetry network usage.',
+      'Bandwidth usage from updates.',
+      'Delivery Optimization uses network resources.',
+      'Peer-to-peer update sharing concerns.',
+      'Firewall prompts confusing.',
+      'Network reset needed more often.',
+      'Troubleshooting requires online help.',
+      'Offline fixes limited.',
+      'System feels less “lightweight” overall.'
     ];
     // Choose a random reason from the array
     const randomIndex = Math.floor(Math.random() * reasons.length);
@@ -1071,7 +1179,7 @@ client.on('messageCreate', message => {
 
   // 3. Define the bot mentions IN HERE, where "message" exists
   const botMention = `<@${message.client.user.id}>`;
-  const botMentionWithNickname = `<@!${message.client.user.id}>`; 
+  const botMentionWithNickname = `<@!${message.client.user.id}>`;
 
   // 4. Your commands
   if (msgContent.includes(`${botMention} , will this work`) || msgContent.includes(`${botMentionWithNickname} , will this work`)) {
@@ -1142,11 +1250,11 @@ client.on('messageCreate', (message) => {
   if (message.content.includes('AFK') && !message.author.bot) {
     const author = message.author;
     const content = message.content.replace('AFK', '');
-    
+
     message.delete()
       .then(() => {
         let response = `Uh bruh He have went afk, ${author} said: ${content}`;
-        
+
         message.channel.send(response);
       })
       .catch((error) => {
@@ -1159,18 +1267,18 @@ client.on('messageCreate', (message) => {
   if (message.content.includes('BRB') && !message.author.bot) {
     const author = message.author;
     const content = message.content.replace('BRB', '');
-    
+
     message.delete()
       .then(() => {
         let response = `brb? brb? BRAB BRAB, he dont do brb, because its haram, ${author} said: ${content}`;
-        
+
         message.channel.send(response);
       })
       .catch((error) => {
         console.error('Error deleting message:', error);
       });
   }
-}); 
+});
 
 client.on('messageCreate', async (message) => {
   const adminPermission = message.member?.permissions.has(PermissionsBitField.Flags.Administrator);
@@ -1254,7 +1362,7 @@ client.on('messageCreate', async (message) => {
   // Type "/setupcolors" to send a new menu, or "/setupcolors [Message_ID]" to update an existing one
   if (command === '/setupcolors' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
     const channel = client.channels.cache.get(RectonRolesChannelId);
-    
+
     if (!channel) {
       return message.reply("Could not find the reaction roles channel. Check your .env ID.");
     }
@@ -1294,18 +1402,18 @@ client.on('messageCreate', async (message) => {
       reactionMessage = await channel.send({ embeds: [embed] });
       message.reply("Color reaction message successfully sent to the channel!");
     }
-    
+
     // Add the reactions to the message (it will skip ones that are already there)
     const emojis = ['🌲', '🍏', '🩸', '⚡', '🌸', '🔮', '🃏', '🧀', '⚪', '⚫', '🌺', '💙', '💎'];
-    for (const emoji of emojis) { 
-      await reactionMessage.react(emoji).catch(() => {}); 
+    for (const emoji of emojis) {
+      await reactionMessage.react(emoji).catch(() => { });
     }
   }
 
   // Type "/setuposes" to send a new menu, or "/setuposes [Message_ID]" to update an existing one
   if (command === '/setuposes' && message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
     const channel = client.channels.cache.get(RectonRolesChannelId);
-    
+
     if (!channel) {
       return message.reply("Could not find the reaction roles channel. Check your .env ID.");
     }
@@ -1345,11 +1453,11 @@ client.on('messageCreate', async (message) => {
       reactionMessage = await channel.send({ embeds: [embed] });
       message.reply("OS reaction message successfully sent to the channel!");
     }
-    
+
     // Add the reactions to the message (it will skip ones that are already there)
     const emojis = ['🪟', '🐧', '🔼', '🌀', '🍎', '🕳️', '🎩', '🟣', '👑', '⛑️', '🦎', '❄️', '😈'];
-    for (const emoji of emojis) { 
-      await reactionMessage.react(emoji).catch(() => {}); 
+    for (const emoji of emojis) {
+      await reactionMessage.react(emoji).catch(() => { });
     }
   }
 });
