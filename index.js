@@ -1061,36 +1061,36 @@ client.on('messageCreate', message => {
     message.channel.send(`${randomReason}`);
   }
 });
+
 client.on('messageCreate', message => {
-  const msgContent = message.content.toLowerCase(); // Convert the message content to lowercase
-  
-  if (msgContent.includes('<@1110480684700668024> , will this work')) {
-    // Check if message ends with a question mark
-    if (msgContent.endsWith('?')) {
-      message.reply('https://tryitands.ee');
-    } else {
-      message.reply('https://tryitands.ee');
-    }
+  // 1. Ignore bot messages to prevent infinite loops
+  if (message.author.bot) return;
+
+  // 2. Define msgContent (make sure you have this!)
+  const msgContent = message.content.toLowerCase();
+
+  // 3. Define the bot mentions IN HERE, where "message" exists
+  const botMention = `<@${message.client.user.id}>`;
+  const botMentionWithNickname = `<@!${message.client.user.id}>`; 
+
+  // 4. Your commands
+  if (msgContent.includes(`${botMention} , will this work`) || msgContent.includes(`${botMentionWithNickname} , will this work`)) {
+    message.reply('https://tryitands.ee');
   }
 
-  if (msgContent.includes('<@1110480684700668024> , will this linux work')) {
-    // Check if message ends with a question mark
-    if (msgContent.endsWith('?')) {
-      message.channel.send({
-        files: ['./linuxitandsee.mp4']
+  if (msgContent.includes(`${botMention} , will this linux work`) || msgContent.includes(`${botMentionWithNickname} , will this linux work`)) {
+    message.channel.send({
+      files: ['./linuxitandsee.mp4']
     });
-    } else {
-      message.channel.send({
-        files: ['./linuxitandsee.mp4']
-    });
-    }
   }
-
 
   if (msgContent === 'gofy a phone') {
     message.reply('https://www.youtube.com/shorts/i2--25-N3vs');
   }
-});
+
+  // Any other message code you had goes here...
+
+}); // <-- This is the closing bracket for the messageCreate event
 
 client.on('messageCreate', (message) => {
   // Ignore bots and DMs
