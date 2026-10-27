@@ -570,7 +570,39 @@ client.on('messageCreate', async message => {
     return;
   }
 
-  // If user is in probation and sent a message without any swear words
+  // Check 3: Does the message contain excessive caps?
+  const minLength = 8;      // ignore short messages
+  const capsThreshold = 0.7; // 70% caps triggers it
+  const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
+
+  if (letters.length >= minLength) {
+    const upperCount = (letters.match(/[A-Z]/g) || []).length;
+    const capsRatio = upperCount / letters.length;
+
+    if (capsRatio >= capsThreshold) {
+      // Put user on probation / reset counter to 0
+      swearProbation.set(probationKey, 0);
+      saveProbationData(swearProbation);
+
+      // Remove the Friendly role if the member has it
+      const friendlyRole = await getFriendlyRole(message.guild);
+      if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
+        await member.roles.remove(friendlyRole, 'Lost Friendly role for excessive caps').catch(console.error);
+      }
+
+      message.reply('Oops! Please avoid using excessive caps. Your message has been deleted and you have lost your Friendly role.')
+        .then(msg => {
+          message.delete().catch(console.error);
+          setTimeout(() => {
+            msg.delete().catch(console.error);
+          }, 15000);
+        })
+        .catch(console.error);
+      return;
+    }
+  }
+
+  // If user is in probation and sent a message without any swear words or excessive caps
   if (swearProbation.has(probationKey)) {
     const friendlyRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
     const cachedFriendly = member.roles.cache.has(friendlyRoleId) || member.roles.cache.find(r =>
@@ -595,7 +627,7 @@ client.on('messageCreate', async message => {
         await member.roles.add(friendlyRole, 'Regained Friendly role after 3 clean messages').catch(console.error);
       }
 
-      message.reply('You have sent 3 messages without swearing! Your Friendly role has been restored.')
+      message.reply('You have sent 3 messages without swearing or excessive caps! Your Friendly role has been restored.')
         .then(msg => {
           setTimeout(() => msg.delete().catch(() => { }), 15000);
         })
@@ -603,36 +635,6 @@ client.on('messageCreate', async message => {
     } else {
       swearProbation.set(probationKey, currentCount);
       saveProbationData(swearProbation);
-    }
-  }
-});
-
-client.on('messageCreate', message => {
-  const ownerRoleName = 'Owner';
-  const minLength = 8;      // ignore short messages
-  const capsThreshold = 0.7; // 70% caps triggers it
-
-  const isStaff = message.member &&
-    (message.member.roles.cache.some(role => role.name === ownerRoleName) ||
-      message.member.permissions.has(PermissionsBitField.Flags.Administrator));
-
-  if (message.author.bot || isStaff) return;
-
-  const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
-
-  if (letters.length >= minLength) {
-    const upperCount = (letters.match(/[A-Z]/g) || []).length;
-    const capsRatio = upperCount / letters.length;
-
-    if (capsRatio >= capsThreshold) {
-      message.reply('Oops! Please avoid using excessive caps. Your message has been deleted.')
-        .then(msg => {
-          message.delete().catch(console.error);
-          setTimeout(() => {
-            msg.delete().catch(console.error);
-          }, 15000);
-        })
-        .catch(console.error);
     }
   }
 });

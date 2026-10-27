@@ -45,9 +45,9 @@
 
 - **🛡️ Advanced Moderation & Anti-Spam**:
   - **Smart Swear & Slur Filter**: Detects inappropriate language, Cyrillic lookalikes (homoglyphs), leetspeak substitutions (`@`, `$`, `0`, `!`), and spaced-out bypasses.
-  - **Automated Friendly Role Probation**: Users who trigger the swear filter temporarily lose their Friendly role (`ROLE_FRIENDLY_ID`), persisted safely across restarts in `swear_probation.json`.
+  - **Automated Friendly Role Probation**: Users who trigger the swear or excessive caps filter temporarily lose their Friendly role (`ROLE_FRIENDLY_ID`), persisted safely across restarts in `swear_probation.json`.
   - **Link Whitelist Filter**: Restricts links exclusively to approved educational, technical, and media domains (e.g., ArchWiki, Debian, Fedora, GitHub, YouTube).
-  - **Anti-Excessive-Caps**: Deletes shout messages containing over 70% capital letters.
+  - **Anti-Excessive-Caps**: Deletes shout messages containing over 70% capital letters and temporarily revokes the Friendly role.
   - **Channel Chat Guard**: Automatically scrubs unauthorized messages from restricted channels (such as `general-no-chat`) and reposts them cleanly.
 - **🎨 Reaction Roles**:
   - **13 Color Roles**: Forest Green, Lime Green, Blood Red, Pikachu, Shroom Pink, Pastel Purple, Joker Purple, Gawdy Yellow, Bright White, Dark Black, Magenta, Good Blue, Royal Blue.
@@ -350,7 +350,7 @@ Create a `.env` file in the root directory based on `.env.example`:
 | `LEAVE_CHANNEL_ID` | Channel ID for goodbye messages | `#goodbyes` |
 | `RECTON_ROLES_CHANNEL_ID` | Channel ID where reaction role menus reside | `#roles` or `#reaction-roles` |
 | `DISCORD_SRV_BOT_ID` | User ID of DiscordSRV bot (if used) | Ignores channel edit spam from Minecraft bridge |
-| `ROLE_FRIENDLY_ID` | Role ID for server "Friendly" members | Automatically removed during swear probation |
+| `ROLE_FRIENDLY_ID` | Role ID for server "Friendly" members | Automatically removed during swear or caps probation |
 | `ROLE_FOREST_GREEN_ID` ... `ROLE_ROYAL_BLUE_ID` | 13 Role IDs for Color self-roles | Created in Server Settings > Roles |
 | `ROLE_WINDOWS_ID` ... `ROLE_BSD_ID` | 13 Role IDs for OS self-roles | Created in Server Settings > Roles |
 
