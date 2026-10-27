@@ -486,7 +486,7 @@ const swearProbation = loadProbationData();
 
 async function getFriendlyRole(guild) {
   if (!guild) return null;
-  const envRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID || '1561291435842732070';
+  const envRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
   if (envRoleId) {
     const cachedRole = guild.roles.cache.get(envRoleId);
     if (cachedRole) return cachedRole;
@@ -572,7 +572,7 @@ client.on('messageCreate', async message => {
 
   // If user is in probation and sent a message without any swear words
   if (swearProbation.has(probationKey)) {
-    const friendlyRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID || '1561291435842732070';
+    const friendlyRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
     const cachedFriendly = member.roles.cache.has(friendlyRoleId) || member.roles.cache.find(r =>
       r.name.toLowerCase() === 'friendly' || r.name.toLowerCase() === 'frineda'
     );
