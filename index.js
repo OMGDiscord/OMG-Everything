@@ -410,6 +410,32 @@ function normalizeMessage(text) {
     .replace(/[^a-z0-9\s]/g, '');
 }
 
+function containsSwear(text) {
+  if (!text) return false;
+  const cleanedText = normalizeMessage(text);
+  const collapsedText = cleanedText.replace(/\s+/g, '').replace(/(.)\1+/g, '$1');
+
+  const wordsInMessage = cleanedText.split(/\s+/);
+  const hasExactSwear = wordsInMessage.some(word => {
+    const collapsedWord = word.replace(/(.)\1+/g, '$1');
+    return exactSwearWords.includes(word) || exactSwearWords.includes(collapsedWord);
+  });
+
+  const hasBypassSwear = bypassSwearWords.some(swear =>
+    cleanedText.includes(swear) || collapsedText.includes(swear)
+  );
+
+  return hasExactSwear || hasBypassSwear;
+}
+
+function hasExcessiveCaps(text, minLength = 8, capsThreshold = 0.7) {
+  if (!text) return false;
+  const letters = text.replace(/[^a-zA-Z]/g, '');
+  if (letters.length < minLength) return false;
+  const upperCount = (letters.match(/[A-Z]/g) || []).length;
+  return (upperCount / letters.length) >= capsThreshold;
+}
+
 const probationFilePath = path.join(__dirname, 'swear_probation.json');
 
 function loadProbationData() {
@@ -479,27 +505,9 @@ client.on('messageCreate', async message => {
 
   if (isExempt) return;
 
-  // Clean the message (strips backticks, converts @ to a, converts Cyrillic, etc.)
-  const cleanedText = normalizeMessage(message.content);
-
-  // Also create a version with no spaces and collapsed repeating letters (turns "f u u u c k" into "fuck")
-  const collapsedText = cleanedText.replace(/\s+/g, '').replace(/(.)\1+/g, '$1');
-
-  // Check 1: Does a standalone word match exactSwearWords?
-  const wordsInMessage = cleanedText.split(/\s+/);
-  const hasExactSwear = wordsInMessage.some(word => {
-    const collapsedWord = word.replace(/(.)\1+/g, '$1'); // turns "gayyyy" into "gay"
-    return exactSwearWords.includes(word) || exactSwearWords.includes(collapsedWord);
-  });
-
-  // Check 2: Does the message contain a severe/longer word hidden with spaces/symbols?
-  const hasBypassSwear = bypassSwearWords.some(swear =>
-    cleanedText.includes(swear) || collapsedText.includes(swear)
-  );
-
   const probationKey = `${message.guild.id}:${message.author.id}`;
 
-  if (hasExactSwear || hasBypassSwear) {
+  if (containsSwear(message.content)) {
     // Reset clean message counter to 0
     swearProbation.set(probationKey, 0);
     saveProbationData(swearProbation);
@@ -521,36 +529,27 @@ client.on('messageCreate', async message => {
     return;
   }
 
-  // Check 3: Does the message contain excessive caps?
-  const minLength = 8;      // ignore short messages
-  const capsThreshold = 0.7; // 70% caps triggers it
-  const letters = message.content.replace(/[^a-zA-Z]/g, ''); // only letters count
+  // Check 2: Does the message contain excessive caps?
+  if (hasExcessiveCaps(message.content)) {
+    // Put user on probation / reset counter to 0
+    swearProbation.set(probationKey, 0);
+    saveProbationData(swearProbation);
 
-  if (letters.length >= minLength) {
-    const upperCount = (letters.match(/[A-Z]/g) || []).length;
-    const capsRatio = upperCount / letters.length;
-
-    if (capsRatio >= capsThreshold) {
-      // Put user on probation / reset counter to 0
-      swearProbation.set(probationKey, 0);
-      saveProbationData(swearProbation);
-
-      // Remove the Friendly role if the member has it
-      const friendlyRole = await getFriendlyRole(message.guild);
-      if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
-        await member.roles.remove(friendlyRole, 'Lost Friendly role for excessive caps').catch(console.error);
-      }
-
-      message.reply('Oops! Please avoid using excessive caps. Your message has been deleted and you have lost your Friendly role.')
-        .then(msg => {
-          message.delete().catch(console.error);
-          setTimeout(() => {
-            msg.delete().catch(console.error);
-          }, 15000);
-        })
-        .catch(console.error);
-      return;
+    // Remove the Friendly role if the member has it
+    const friendlyRole = await getFriendlyRole(message.guild);
+    if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
+      await member.roles.remove(friendlyRole, 'Lost Friendly role for excessive caps').catch(console.error);
     }
+
+    message.reply('Oops! Please avoid using excessive caps. Your message has been deleted and you have lost your Friendly role.')
+      .then(msg => {
+        message.delete().catch(console.error);
+        setTimeout(() => {
+          msg.delete().catch(console.error);
+        }, 15000);
+      })
+      .catch(console.error);
+    return;
   }
 
   // Handle Friendly role for clean messages (no swear words, no excessive caps)
@@ -1213,36 +1212,56 @@ client.on('messageCreate', (message) => {
 });
 
 client.on('messageCreate', (message) => {
-  if (message.content.includes('AFK') && !message.author.bot) {
-    const author = message.author;
-    const content = message.content.replace('AFK', '');
+  // Ignore bots and DMs
+  if (message.author.bot || !message.guild) return;
 
-    message.delete()
-      .then(() => {
-        let response = `Uh bruh He have went afk, ${author} said: ${content}`;
+  if (message.content.includes('AFK')) {
+    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
+    let content = message.content
+      .replace(/AFK/g, '')
+      .replace(/@everyone/gi, '@\u200beveryone')
+      .replace(/@here/gi, '@\u200bhere')
+      .replace(/<@&\d+>/g, '@deleted-role');
 
-        message.channel.send(response);
-      })
-      .catch((error) => {
-        console.error('Error deleting message:', error);
-      });
+    // 2. Delete the original message safely
+    message.delete().catch(console.error);
+
+    const response = `Uh bruh He have went afk, <@${message.author.id}> said: ${content}`;
+
+    // 3. Send the message with allowedMentions locked down to ONLY user pings
+    message.channel.send({
+      content: response,
+      allowedMentions: {
+        parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
+      }
+    }).catch(console.error);
   }
 });
 
 client.on('messageCreate', (message) => {
-  if (message.content.includes('BRB') && !message.author.bot) {
-    const author = message.author;
-    const content = message.content.replace('BRB', '');
+  // Ignore bots and DMs
+  if (message.author.bot || !message.guild) return;
 
-    message.delete()
-      .then(() => {
-        let response = `brb? brb? BRAB BRAB, he dont do brb, because its haram, ${author} said: ${content}`;
+  if (message.content.includes('BRB')) {
+    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
+    let content = message.content
+      .replace(/BRB/g, '')
+      .replace(/@everyone/gi, '@\u200beveryone')
+      .replace(/@here/gi, '@\u200bhere')
+      .replace(/<@&\d+>/g, '@deleted-role');
 
-        message.channel.send(response);
-      })
-      .catch((error) => {
-        console.error('Error deleting message:', error);
-      });
+    // 2. Delete the original message safely
+    message.delete().catch(console.error);
+
+    const response = `brb? brb? BRAB BRAB, he dont do brb, because its haram, <@${message.author.id}> said: ${content}`;
+
+    // 3. Send the message with allowedMentions locked down to ONLY user pings
+    message.channel.send({
+      content: response,
+      allowedMentions: {
+        parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
+      }
+    }).catch(console.error);
   }
 });
 
@@ -1259,15 +1278,21 @@ client.on('messageCreate', async (message) => {
 
     // Replace @everyone and @here with something that won't trigger the mentions
     const sanitizedContent = message.content
-      .replace(/@everyone/g, '@\u200beveryone')
-      .replace(/@here/g, '@\u200bhere');
+      .replace(/@everyone/gi, '@\u200beveryone')
+      .replace(/@here/gi, '@\u200bhere')
+      .replace(/<@&\d+>/g, '@deleted-role');
 
     // Split the message content into chunks of 2000 characters or less
     const messageChunks = sanitizedContent.match(/.{1,2000}/g);
 
     if (messageChunks) {
       for (const chunk of messageChunks) {
-        await message.channel.send(`${userTag} said: ${chunk}`);
+        await message.channel.send({
+          content: `${userTag} said: ${chunk}`,
+          allowedMentions: {
+            parse: ['users']
+          }
+        }).catch(console.error);
       }
     }
   }
