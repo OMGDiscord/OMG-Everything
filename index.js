@@ -115,8 +115,6 @@ client.on('interactionCreate', async interaction => {
       .setDescription('Here are the available admin commands for this bot:')
       .addFields(
         { name: '/adminhelp', value: 'Displays this list of commands' },
-        { name: '/giverole', value: 'Gives a role to a User' },
-        { name: '/removerole', value: 'Removes a Role from User' },
         { name: '/clear', value: 'To clear the chat from 1 - 99 messages' },
         { name: '/nicknameremove', value: 'Removes the nickname from all members' },
         { name: '/setupcolors', value: 'Sends the color reaction roles menu' },
@@ -229,61 +227,6 @@ client.on("messageCreate", (message) => {
     message.channel.bulkDelete(deleteCount, true)
       .then(deleted => console.log(`Deleted ${deleted.size} messages.`))
       .catch(err => message.reply(`Something went wrong: ${err}`));
-  }
-  if (command === 'giverole') {
-    // Check if the user has permission to use the command
-    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
-      message.reply('You do not have permission to use this command.');
-      return;
-    }
-
-    // Check if a user and role were mentioned
-    const user = message.mentions.members.first();
-    const role = message.mentions.roles.first();
-    if (!user || !role) {
-      message.reply('Please mention a user and a role.');
-      return;
-    }
-
-    // Give the role to the user
-    user.roles.add(role)
-      .then(() => {
-        // Send a success message
-        message.channel.send(`Successfully gave the ${role.name} role to ${user.displayName}.`);
-      })
-      .catch(error => {
-        // Handle any errors that occur
-        console.error('Error while giving role:', error);
-        message.channel.send('An error occurred while giving the role.');
-      });
-  }
-
-  if (command === 'removerole') {
-    // Check if the user has permission to use the command
-    if (!message.member.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
-      message.reply('You do not have permission to use this command.');
-      return;
-    }
-
-    // Check if a user and role were mentioned
-    const user = message.mentions.members.first();
-    const role = message.mentions.roles.first();
-    if (!user || !role) {
-      message.reply('Please mention a user and a role.');
-      return;
-    }
-
-    // Remove the role from the user
-    user.roles.remove(role)
-      .then(() => {
-        // Send a success message
-        message.channel.send(`Successfully removed the ${role.name} role from ${user.displayName}.`);
-      })
-      .catch(error => {
-        // Handle any errors that occur
-        console.error('Error while removing role:', error);
-        message.channel.send('An error occurred while removing the role.');
-      });
   }
   if (command === "meme") {
     const axios = require('axios');

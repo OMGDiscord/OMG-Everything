@@ -395,8 +395,6 @@ Once your bot is running and invited to your server:
 |---|---|---|
 | `/adminhelp` | Everyone | Displays the list of administrative commands |
 | `/clear <1-99>` | `Administrator` | Bulk deletes between 1 and 99 messages in the channel |
-| `/giverole @user @role` | `Manage Roles` | Assigns a specified role to a member |
-| `/removerole @user @role` | `Manage Roles` | Removes a specified role from a member |
 | `/nicknameremove` | `Manage Nicknames` | Resets custom nicknames for all members across the server |
 | `/setupcolors [msg_id]` | `Administrator` | Sends or updates the color reaction role menu |
 | `/setuposes [msg_id]` | `Administrator` | Sends or updates the OS reaction role menu |
