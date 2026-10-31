@@ -1170,6 +1170,9 @@ client.on('messageCreate', (message) => {
   if (message.author.bot || !message.guild) return;
 
   if (message.content.includes('@someone')) {
+    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
+    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+
     const membersArray = Array.from(message.guild.members.cache.values());
 
     if (membersArray.length === 0) {
@@ -1177,13 +1180,13 @@ client.on('messageCreate', (message) => {
       return;
     }
 
-    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
+    // 2. Defang @everyone, @here, and role mentions (<@&id>) in the text
     let content = message.content
       .replace(/@everyone/gi, '@\u200beveryone')
       .replace(/@here/gi, '@\u200bhere')
       .replace(/<@&\d+>/g, '@deleted-role');
 
-    // 2. Replace up to 5 instances of @someone with random members
+    // 3. Replace up to 5 instances of @someone with random members
     for (let i = 0; i < 5; i++) {
       if (content.includes('@someone')) {
         const randomIndex = Math.floor(Math.random() * membersArray.length);
@@ -1196,10 +1199,40 @@ client.on('messageCreate', (message) => {
       }
     }
 
-    // 3. Delete the original message safely
+    // 4. Delete the original message safely
     message.delete().catch(console.error);
 
     const response = `<@${message.author.id}> said: ${content}`;
+
+    // 5. Send the message with allowedMentions locked down to ONLY user pings
+    message.channel.send({
+      content: response,
+      allowedMentions: {
+        parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
+      }
+    }).catch(console.error);
+  }
+});
+
+client.on('messageCreate', (message) => {
+  // Ignore bots and DMs
+  if (message.author.bot || !message.guild) return;
+
+  if (/\bafk\b/i.test(message.content)) {
+    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
+    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+
+    // 2. Defang @everyone, @here, and role mentions (<@&id>) in the text
+    let content = message.content
+      .replace(/\bafk\b/gi, '')
+      .replace(/@everyone/gi, '@\u200beveryone')
+      .replace(/@here/gi, '@\u200bhere')
+      .replace(/<@&\d+>/g, '@deleted-role');
+
+    // 3. Delete the original message safely
+    message.delete().catch(console.error);
+
+    const response = `Uh bruh He have went afk, <@${message.author.id}> said: ${content}`;
 
     // 4. Send the message with allowedMentions locked down to ONLY user pings
     message.channel.send({
@@ -1215,47 +1248,23 @@ client.on('messageCreate', (message) => {
   // Ignore bots and DMs
   if (message.author.bot || !message.guild) return;
 
-  if (message.content.includes('AFK')) {
-    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
+  if (/\bbrb\b/i.test(message.content)) {
+    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
+    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+
+    // 2. Defang @everyone, @here, and role mentions (<@&id>) in the text
     let content = message.content
-      .replace(/AFK/g, '')
+      .replace(/\bbrb\b/gi, '')
       .replace(/@everyone/gi, '@\u200beveryone')
       .replace(/@here/gi, '@\u200bhere')
       .replace(/<@&\d+>/g, '@deleted-role');
 
-    // 2. Delete the original message safely
-    message.delete().catch(console.error);
-
-    const response = `Uh bruh He have went afk, <@${message.author.id}> said: ${content}`;
-
-    // 3. Send the message with allowedMentions locked down to ONLY user pings
-    message.channel.send({
-      content: response,
-      allowedMentions: {
-        parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
-      }
-    }).catch(console.error);
-  }
-});
-
-client.on('messageCreate', (message) => {
-  // Ignore bots and DMs
-  if (message.author.bot || !message.guild) return;
-
-  if (message.content.includes('BRB')) {
-    // 1. Defang @everyone, @here, and role mentions (<@&id>) in the text
-    let content = message.content
-      .replace(/BRB/g, '')
-      .replace(/@everyone/gi, '@\u200beveryone')
-      .replace(/@here/gi, '@\u200bhere')
-      .replace(/<@&\d+>/g, '@deleted-role');
-
-    // 2. Delete the original message safely
+    // 3. Delete the original message safely
     message.delete().catch(console.error);
 
     const response = `brb? brb? BRAB BRAB, he dont do brb, because its haram, <@${message.author.id}> said: ${content}`;
 
-    // 3. Send the message with allowedMentions locked down to ONLY user pings
+    // 4. Send the message with allowedMentions locked down to ONLY user pings
     message.channel.send({
       content: response,
       allowedMentions: {
@@ -1266,14 +1275,20 @@ client.on('messageCreate', (message) => {
 });
 
 client.on('messageCreate', async (message) => {
-  const adminPermission = message.member?.permissions.has(PermissionsBitField.Flags.Administrator);
+  // Ignore bots and DMs
+  if (message.author.bot || !message.guild) return;
+
+  const adminPermission = message.member?.permissions?.has(PermissionsBitField.Flags.Administrator) ?? false;
 
   if (
     message.channel.name === 'general-no-chat' &&
     !adminPermission &&
     message.author.id !== client.user.id
   ) {
-    message.delete();
+    // Block if message contains swears or excessive caps (handled by moderation filter)
+    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+
+    message.delete().catch(console.error);
     const userTag = `<@${message.author.id}>`;
 
     // Replace @everyone and @here with something that won't trigger the mentions
@@ -1290,7 +1305,7 @@ client.on('messageCreate', async (message) => {
         await message.channel.send({
           content: `${userTag} said: ${chunk}`,
           allowedMentions: {
-            parse: ['users']
+            parse: ['users'], // ONLY allows user mentions; completely disables @everyone, @here, and roles
           }
         }).catch(console.error);
       }
