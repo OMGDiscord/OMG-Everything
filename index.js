@@ -318,6 +318,14 @@ client.on("messageCreate", (message) => {
 });
 
 client.on('guildMemberAdd', member => {
+  if (!member.user.bot) {
+    const probationKey = `${member.guild.id}:${member.id}`;
+    if (!swearProbation.has(probationKey)) {
+      swearProbation.set(probationKey, 0);
+      saveProbationData(swearProbation);
+    }
+  }
+
   // Get the channel by ID
   const channel = member.guild.channels.cache.get(welcomeChannelId);
 
@@ -336,7 +344,7 @@ client.on('messageCreate', async (message) => {
   if (!message.guild) return; // Ignore DMs
 
   const allowedDomains = ['wiki.archlinux.org', 'wiki.artixlinux.org', 'ubuntu.com', 'fedoraproject.org', 'microsoft.com', 'freebsd.org', 'gentoo.org', 'github.com', 'gitlab.gnome.org', 'bugs.kde.org', 'kde.org', 'gnome.org', 'pop.system76.com', 'linuxmint.com', 'tenor.com', 'ix.io', 'youtube.com', 'klipy.com', 'cdn.discordapp.com'];
-  const hasLinkPermission = message.member.permissions.has(PermissionsBitField.Flags.Administrator);
+  const hasLinkPermission = message.member?.permissions?.has(PermissionsBitField.Flags.Administrator) ?? false;
   const messageContent = message.content.toLowerCase(); // Convert message content to lowercase for case-insensitive matching
 
   const hasLink = /(http|https):\/\/(\S+)\.(\S+)/gi.test(messageContent);
@@ -545,40 +553,53 @@ client.on('messageCreate', async message => {
     }
   }
 
-  // If user is in probation and sent a message without any swear words or excessive caps
-  if (swearProbation.has(probationKey)) {
-    const friendlyRoleId = process.env.ROLE_FRIENDLY_ID || process.env.FRIENDLY_ROLE_ID;
-    const cachedFriendly = member.roles.cache.has(friendlyRoleId) || member.roles.cache.find(r =>
-      r.name.toLowerCase() === 'friendly' || r.name.toLowerCase() === 'frineda'
-    );
+  // Handle Friendly role for clean messages (no swear words, no excessive caps)
+  const friendlyRole = await getFriendlyRole(message.guild);
+  if (!friendlyRole) return;
 
-    // If member already has the friendly role (e.g. manually restored), clear probation
-    if (cachedFriendly) {
+  const hasFriendly = member.roles.cache.has(friendlyRole.id);
+
+  // If member already has the friendly role, clear any leftover probation
+  if (hasFriendly) {
+    if (swearProbation.has(probationKey)) {
       swearProbation.delete(probationKey);
       saveProbationData(swearProbation);
-      return;
     }
+    return;
+  }
 
-    const currentCount = (swearProbation.get(probationKey) || 0) + 1;
+  // Member does NOT have the Friendly role: track clean messages towards getting/restoring it
+  const wasProbation = swearProbation.has(probationKey);
+  const currentCount = (swearProbation.get(probationKey) || 0) + 1;
 
-    if (currentCount >= 3) {
+  if (currentCount >= 3) {
+    try {
+      await member.roles.add(friendlyRole, wasProbation ? 'Regained Friendly role after 3 clean messages' : 'Earned Friendly role after 3 clean messages');
       swearProbation.delete(probationKey);
       saveProbationData(swearProbation);
 
-      const friendlyRole = await getFriendlyRole(message.guild);
-      if (friendlyRole && !member.roles.cache.has(friendlyRole.id)) {
-        await member.roles.add(friendlyRole, 'Regained Friendly role after 3 clean messages').catch(console.error);
-      }
+      const replyText = wasProbation
+        ? 'You have sent 3 messages without swearing or excessive caps! Your Friendly role has been restored.'
+        : 'You have sent 3 messages without swearing or excessive caps! Your Friendly role has been granted.';
 
-      message.reply('You have sent 3 messages without swearing or excessive caps! Your Friendly role has been restored.')
+      message.reply(replyText)
         .then(msg => {
           setTimeout(() => msg.delete().catch(() => { }), 15000);
         })
         .catch(console.error);
-    } else {
-      swearProbation.set(probationKey, currentCount);
+    } catch (err) {
+      console.error(`Failed to assign Friendly role (${friendlyRole.name}) to ${member.user?.tag || member.id}:`, err);
+      const botMember = message.guild.members.me;
+      if (botMember && botMember.roles.highest.position <= friendlyRole.position) {
+        console.error(`[ROLE HIERARCHY ERROR] The bot's highest role (${botMember.roles.highest.name}) is lower than or equal to Friendly role (${friendlyRole.name}). Please move the bot's role above "${friendlyRole.name}" in Server Settings > Roles.`);
+      }
+      // Keep user in swearProbation at 3 so bot remembers them and retries
+      swearProbation.set(probationKey, 3);
       saveProbationData(swearProbation);
     }
+  } else {
+    swearProbation.set(probationKey, currentCount);
+    saveProbationData(swearProbation);
   }
 });
 
