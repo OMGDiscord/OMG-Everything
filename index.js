@@ -34,6 +34,15 @@ const OMG_BOTS_CHANNEL_ID = process.env.OMG_BOTS_CHANNEL_ID;
 const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
 const leaveChannelId = process.env.LEAVE_CHANNEL_ID;
 const RectonRolesChannelId = process.env.RECTON_ROLES_CHANNEL_ID;
+const SWEAR_EXEMPT_CHANNEL_ID = process.env.SWEAR_EXEMPT_CHANNEL_ID || '1566128445270794400';
+
+function isFilterExemptChannel(channelId) {
+  const exemptChannelIds = ['1566128445270794400'];
+  if (process.env.SWEAR_EXEMPT_CHANNEL_ID) {
+    exemptChannelIds.push(process.env.SWEAR_EXEMPT_CHANNEL_ID);
+  }
+  return exemptChannelIds.includes(channelId);
+}
 
 client.on('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}`);
@@ -506,50 +515,59 @@ client.on('messageCreate', async message => {
   if (isExempt) return;
 
   const probationKey = `${message.guild.id}:${message.author.id}`;
+  const isChannelExempt = isFilterExemptChannel(message.channel.id);
 
-  if (containsSwear(message.content)) {
-    // Reset clean message counter to 0
-    swearProbation.set(probationKey, 0);
-    saveProbationData(swearProbation);
+  if (!isChannelExempt) {
+    if (containsSwear(message.content)) {
+      // Reset clean message counter to 0
+      swearProbation.set(probationKey, 0);
+      saveProbationData(swearProbation);
 
-    // Remove the Friendly role if the member has it
-    const friendlyRole = await getFriendlyRole(message.guild);
-    if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
-      await member.roles.remove(friendlyRole, 'Lost Friendly role for swearing').catch(console.error);
+      // Remove the Friendly role if the member has it
+      const friendlyRole = await getFriendlyRole(message.guild);
+      if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
+        await member.roles.remove(friendlyRole, 'Lost Friendly role for swearing').catch(console.error);
+      }
+
+      message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted and you have lost your Friendly role. Send 3 messages without swearing to get it back.')
+        .then(msg => {
+          message.delete().catch(console.error);
+          setTimeout(() => {
+            msg.delete().catch(console.error);
+          }, 15000);
+        })
+        .catch(console.error);
+      return;
     }
 
-    message.reply('Oops! You are not allowed to swear in this server. Your message has been deleted and you have lost your Friendly role. Send 3 messages without swearing to get it back.')
-      .then(msg => {
-        message.delete().catch(console.error);
-        setTimeout(() => {
-          msg.delete().catch(console.error);
-        }, 15000);
-      })
-      .catch(console.error);
-    return;
-  }
+    // Check 2: Does the message contain excessive caps?
+    if (hasExcessiveCaps(message.content)) {
+      // Put user on probation / reset counter to 0
+      swearProbation.set(probationKey, 0);
+      saveProbationData(swearProbation);
 
-  // Check 2: Does the message contain excessive caps?
-  if (hasExcessiveCaps(message.content)) {
-    // Put user on probation / reset counter to 0
-    swearProbation.set(probationKey, 0);
-    saveProbationData(swearProbation);
+      // Remove the Friendly role if the member has it
+      const friendlyRole = await getFriendlyRole(message.guild);
+      if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
+        await member.roles.remove(friendlyRole, 'Lost Friendly role for excessive caps').catch(console.error);
+      }
 
-    // Remove the Friendly role if the member has it
-    const friendlyRole = await getFriendlyRole(message.guild);
-    if (friendlyRole && member.roles.cache.has(friendlyRole.id)) {
-      await member.roles.remove(friendlyRole, 'Lost Friendly role for excessive caps').catch(console.error);
+      message.reply('Oops! Please avoid using excessive caps. Your message has been deleted and you have lost your Friendly role.')
+        .then(msg => {
+          message.delete().catch(console.error);
+          setTimeout(() => {
+            msg.delete().catch(console.error);
+          }, 15000);
+        })
+        .catch(console.error);
+      return;
     }
-
-    message.reply('Oops! Please avoid using excessive caps. Your message has been deleted and you have lost your Friendly role.')
-      .then(msg => {
-        message.delete().catch(console.error);
-        setTimeout(() => {
-          msg.delete().catch(console.error);
-        }, 15000);
-      })
-      .catch(console.error);
-    return;
+  } else {
+    // In exempt channel: do not delete messages or punish for swearing or caps.
+    // However, if the message contained swears or caps, do not treat it as clean for Friendly role progression.
+    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) {
+      return;
+    }
   }
 
   // Handle Friendly role for clean messages (no swear words, no excessive caps)
@@ -1170,8 +1188,8 @@ client.on('messageCreate', (message) => {
   if (message.author.bot || !message.guild) return;
 
   if (message.content.includes('@someone')) {
-    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
-    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+    // 1. Block if message contains swears or excessive caps (unless in exempt channel)
+    if (!isFilterExemptChannel(message.channel.id) && (containsSwear(message.content) || hasExcessiveCaps(message.content))) return;
 
     const membersArray = Array.from(message.guild.members.cache.values());
 
@@ -1219,8 +1237,8 @@ client.on('messageCreate', (message) => {
   if (message.author.bot || !message.guild) return;
 
   if (/\bafk\b/i.test(message.content)) {
-    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
-    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+    // 1. Block if message contains swears or excessive caps (unless in exempt channel)
+    if (!isFilterExemptChannel(message.channel.id) && (containsSwear(message.content) || hasExcessiveCaps(message.content))) return;
 
     // 2. Defang @everyone, @here, and role mentions (<@&id>) in the text
     let content = message.content
@@ -1249,8 +1267,8 @@ client.on('messageCreate', (message) => {
   if (message.author.bot || !message.guild) return;
 
   if (/\bbrb\b/i.test(message.content)) {
-    // 1. Block if message contains swears or excessive caps (handled by moderation filter)
-    if (containsSwear(message.content) || hasExcessiveCaps(message.content)) return;
+    // 1. Block if message contains swears or excessive caps (unless in exempt channel)
+    if (!isFilterExemptChannel(message.channel.id) && (containsSwear(message.content) || hasExcessiveCaps(message.content))) return;
 
     // 2. Defang @everyone, @here, and role mentions (<@&id>) in the text
     let content = message.content
